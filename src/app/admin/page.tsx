@@ -13,14 +13,8 @@ interface Booking {
   event_type: string;
   event_date: string | null;
   pax: number | null;
-  message: string | null;
   status: string;
-  notes: string | null;
-  deposit_amount: number;
   total_amount: number;
-  last_contacted_at: string | null;
-  deposit_paid: boolean;
-  final_paid: boolean;
   created_at: string;
 }
 
@@ -29,13 +23,14 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -63,13 +58,11 @@ export default function AdminDashboard() {
     router.push("/admin/login");
   };
 
-  const getDaysInMonth = (month: number, year: number) => {
-    return new Date(year, month + 1, 0).getDate();
-  };
+  const getDaysInMonth = (month: number, year: number) =>
+    new Date(year, month + 1, 0).getDate();
 
-  const getFirstDayOfMonth = (month: number, year: number) => {
-    return new Date(year, month, 1).getDay();
-  };
+  const getFirstDayOfMonth = (month: number, year: number) =>
+    new Date(year, month, 1).getDay();
 
   const getBookingsForDate = (day: number) => {
     const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -92,6 +85,7 @@ export default function AdminDashboard() {
         setCurrentMonth(currentMonth + 1);
       }
     }
+    setSelectedDate(null);
   };
 
   const stats = {
@@ -100,19 +94,23 @@ export default function AdminDashboard() {
     pendingDeposit: bookings.filter((b) => b.status === "pending_deposit").length,
     confirmed: bookings.filter((b) => b.status === "confirmed").length,
     totalRevenue: bookings.reduce((sum, b) => sum + (b.total_amount || 0), 0),
-    depositsReceived: bookings.reduce((sum, b) => sum + (b.deposit_amount || 0), 0),
   };
 
   const daysInMonth = getDaysInMonth(currentMonth, currentYear);
   const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
 
   const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) {
-    calendarDays.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    calendarDays.push(i);
-  }
+  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
+  for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
+
+  const selectedBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
+
+  const getStatusColor = (status: string) => {
+    if (status === "confirmed" || status === "deposit_paid") return "bg-green-500";
+    if (status === "cancelled") return "bg-red-400";
+    if (status === "new") return "bg-blue-500";
+    return "bg-amber-400";
+  };
 
   if (loading) {
     return (
@@ -126,88 +124,53 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-8 py-5 flex justify-between items-center">
-          <h1
-            className="text-base font-semibold text-gray-900 tracking-tight"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+          <h1 className="text-base font-semibold text-gray-900" style={{ fontFamily: "var(--font-playfair)" }}>
             Arabella Admin
           </h1>
           <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider"
-            >
-              Site
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider"
-            >
-              Logout
-            </button>
+            <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider">Site</Link>
+            <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider">Logout</button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-8 py-10">
-        {/* Stats Row */}
-        <div className="grid grid-cols-5 gap-px bg-gray-100 rounded-lg overflow-hidden mb-12">
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* Stats */}
+        <div className="flex gap-6 mb-10">
           {[
-            { label: "Total", value: stats.total },
-            { label: "New", value: stats.new, accent: true },
-            { label: "Awaiting Deposit", value: stats.pendingDeposit },
-            { label: "Confirmed", value: stats.confirmed },
-            { label: "Revenue", value: `₱${stats.totalRevenue.toLocaleString()}` },
+            { label: "Inquiries", value: stats.total, color: "text-gray-900" },
+            { label: "New", value: stats.new, color: "text-blue-500" },
+            { label: "Pending", value: stats.pendingDeposit, color: "text-amber-500" },
+            { label: "Confirmed", value: stats.confirmed, color: "text-green-500" },
+            { label: "Revenue", value: `₱${stats.totalRevenue.toLocaleString()}`, color: "text-gray-900" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-white p-5">
-              <p className={`text-2xl font-semibold ${stat.accent ? "text-blue-600" : "text-gray-900"}`}>
-                {stat.value}
-              </p>
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">
-                {stat.label}
-              </p>
+            <div key={stat.label} className="flex-1">
+              <p className={`text-2xl font-semibold ${stat.color}`}>{stat.value}</p>
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-10">
-          {/* Calendar */}
-          <div className="col-span-2">
-            <div className="flex items-center justify-between mb-6">
-              <h2
-                className="text-lg font-semibold text-gray-900"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
+        <div className="flex gap-10">
+          {/* Calendar - Compact */}
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "var(--font-playfair)" }}>
                 {MONTHS[currentMonth]} {currentYear}
               </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => navigateMonth(-1)}
-                  className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors text-sm"
-                >
-                  &larr;
-                </button>
-                <button
-                  onClick={() => navigateMonth(1)}
-                  className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors text-sm"
-                >
-                  &rarr;
-                </button>
+              <div className="flex gap-1">
+                <button onClick={() => navigateMonth(-1)} className="w-7 h-7 rounded border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors text-xs">&larr;</button>
+                <button onClick={() => navigateMonth(1)} className="w-7 h-7 rounded border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-colors text-xs">&rarr;</button>
               </div>
             </div>
 
-            {/* Calendar Grid */}
-            <div className="border border-gray-100 rounded-lg overflow-hidden">
+            {/* Compact Calendar */}
+            <div className="border border-gray-100 rounded-lg">
               {/* Day Headers */}
               <div className="grid grid-cols-7 border-b border-gray-100">
                 {DAYS.map((day) => (
-                  <div
-                    key={day}
-                    className="py-3 text-center text-[10px] font-medium text-gray-400 uppercase tracking-widest"
-                  >
-                    {day}
-                  </div>
+                  <div key={day} className="py-2 text-center text-[10px] font-medium text-gray-400">{day}</div>
                 ))}
               </div>
 
@@ -215,51 +178,36 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-7">
                 {calendarDays.map((day, index) => {
                   const dayBookings = day ? getBookingsForDate(day) : [];
-                  const isToday =
-                    day === new Date().getDate() &&
-                    currentMonth === new Date().getMonth() &&
-                    currentYear === new Date().getFullYear();
+                  const isToday = day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
+                  const isSelected = day === selectedDate;
+                  const hasEvents = dayBookings.length > 0;
 
                   return (
                     <div
                       key={index}
-                      className={`min-h-[90px] p-2 border-b border-r border-gray-50 ${
-                        day ? "hover:bg-gray-50 transition-colors" : ""
-                      }`}
+                      onClick={() => day && setSelectedDate(day)}
+                      className={`relative h-16 p-1.5 border-b border-r border-gray-50 transition-colors ${
+                        day ? "cursor-pointer hover:bg-gray-50" : ""
+                      } ${isSelected ? "bg-gray-100" : ""}`}
                     >
                       {day && (
                         <>
-                          <span
-                            className={`text-xs font-medium ${
-                              isToday
-                                ? "bg-gray-900 text-white w-6 h-6 rounded-full flex items-center justify-center"
-                                : "text-gray-500"
-                            }`}
-                          >
+                          <span className={`text-xs ${isToday ? "bg-gray-900 text-white w-5 h-5 rounded-full flex items-center justify-center font-medium" : "text-gray-600"}`}>
                             {day}
                           </span>
-                          <div className="mt-1 space-y-0.5">
-                            {dayBookings.slice(0, 2).map((booking) => (
-                              <Link
-                                key={booking.id}
-                                href={`/admin/inquiries/${booking.id}`}
-                                className={`block text-[10px] px-1.5 py-0.5 rounded truncate ${
-                                  booking.status === "confirmed"
-                                    ? "bg-green-100 text-green-700"
-                                    : booking.status === "cancelled"
-                                    ? "bg-red-100 text-red-700"
-                                    : "bg-blue-100 text-blue-700"
-                                }`}
-                              >
-                                {booking.name}
-                              </Link>
-                            ))}
-                            {dayBookings.length > 2 && (
-                              <span className="text-[10px] text-gray-400">
-                                +{dayBookings.length - 2} more
-                              </span>
-                            )}
-                          </div>
+                          {hasEvents && (
+                            <div className="mt-1 space-y-0.5">
+                              {dayBookings.slice(0, 2).map((b) => (
+                                <div key={b.id} className="flex items-center gap-1">
+                                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusColor(b.status)}`} />
+                                  <span className="text-[9px] text-gray-600 truncate">{b.name.split(" ")[0]}</span>
+                                </div>
+                              ))}
+                              {dayBookings.length > 2 && (
+                                <span className="text-[9px] text-gray-400">+{dayBookings.length - 2}</span>
+                              )}
+                            </div>
+                          )}
                         </>
                       )}
                     </div>
@@ -269,130 +217,97 @@ export default function AdminDashboard() {
             </div>
 
             {/* Legend */}
-            <div className="flex gap-4 mt-4 text-[10px] text-gray-400">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-sm bg-blue-100" />
-                Pending
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-sm bg-green-100" />
-                Confirmed
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-sm bg-red-100" />
-                Cancelled
-              </div>
+            <div className="flex gap-4 mt-3 text-[10px] text-gray-400">
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" /> New</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> Pending</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" /> Confirmed</div>
+              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-400" /> Cancelled</div>
             </div>
+
+            {/* Selected Date Events */}
+            {selectedDate && (
+              <div className="mt-6 border-t border-gray-100 pt-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  {MONTHS[currentMonth]} {selectedDate}, {currentYear}
+                </h3>
+                {selectedBookings.length === 0 ? (
+                  <p className="text-sm text-gray-400">No events on this date</p>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedBookings.map((booking) => (
+                      <Link
+                        key={booking.id}
+                        href={`/admin/inquiries/${booking.id}`}
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`w-2 h-2 rounded-full ${getStatusColor(booking.status)}`} />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{booking.name}</p>
+                            <p className="text-xs text-gray-400">{booking.event_type} · {booking.pax || "-"} pax</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          {booking.status.replace("_", " ")}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-8">
-            {/* Upcoming Events */}
+          <div className="w-64 space-y-8">
+            {/* Upcoming */}
             <div>
-              <h2
-                className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wider"
-              >
-                Upcoming
-              </h2>
+              <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">Upcoming</h2>
               <div className="space-y-0">
                 {bookings
-                  .filter(
-                    (b) =>
-                      b.event_date &&
-                      new Date(b.event_date) >= new Date() &&
-                      b.status !== "cancelled"
-                  )
-                  .sort(
-                    (a, b) =>
-                      new Date(a.event_date!).getTime() -
-                      new Date(b.event_date!).getTime()
-                  )
-                  .slice(0, 6)
+                  .filter((b) => b.event_date && new Date(b.event_date) >= new Date() && b.status !== "cancelled")
+                  .sort((a, b) => new Date(a.event_date!).getTime() - new Date(b.event_date!).getTime())
+                  .slice(0, 5)
                   .map((booking) => (
                     <Link
                       key={booking.id}
                       href={`/admin/inquiries/${booking.id}`}
-                      className="flex items-center gap-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
+                      className="flex items-center gap-3 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
                     >
-                      <div className="w-10 text-center">
-                        <p className="text-[10px] text-gray-400 uppercase">
-                          {new Date(booking.event_date!).toLocaleDateString("en-US", {
-                            month: "short",
-                          })}
-                        </p>
-                        <p className="text-lg font-semibold text-gray-900">
-                          {new Date(booking.event_date!).getDate()}
-                        </p>
+                      <div className="w-9 text-center">
+                        <p className="text-[9px] text-gray-400 uppercase">{new Date(booking.event_date!).toLocaleDateString("en-US", { month: "short" })}</p>
+                        <p className="text-sm font-semibold text-gray-900">{new Date(booking.event_date!).getDate()}</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {booking.name}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate">
-                          {booking.event_type} · {booking.pax || "-"} pax
-                        </p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{booking.name}</p>
+                        <p className="text-xs text-gray-400 truncate">{booking.event_type}</p>
                       </div>
                     </Link>
                   ))}
-                {bookings.filter(
-                  (b) =>
-                    b.event_date &&
-                    new Date(b.event_date) >= new Date() &&
-                    b.status !== "cancelled"
-                ).length === 0 && (
-                  <p className="text-sm text-gray-300 py-4">No upcoming events</p>
+                {bookings.filter((b) => b.event_date && new Date(b.event_date) >= new Date() && b.status !== "cancelled").length === 0 && (
+                  <p className="text-xs text-gray-300 py-3">No upcoming events</p>
                 )}
               </div>
             </div>
 
-            {/* Recent Inquiries */}
+            {/* Recent */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2
-                  className="text-sm font-semibold text-gray-900 uppercase tracking-wider"
-                >
-                  Recent
-                </h2>
-                <Link
-                  href="/admin/inquiries"
-                  className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-wider"
-                >
-                  View All
-                </Link>
+                <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Recent</h2>
+                <Link href="/admin/inquiries" className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-wider">All</Link>
               </div>
               <div className="space-y-0">
-                {bookings.slice(0, 5).map((booking) => (
+                {bookings.slice(0, 4).map((booking) => (
                   <Link
                     key={booking.id}
                     href={`/admin/inquiries/${booking.id}`}
-                    className="flex items-center justify-between py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
+                    className="flex items-center justify-between py-2.5 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
                   >
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {booking.name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {booking.event_type}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                        booking.status === "new"
-                          ? "bg-blue-100 text-blue-600"
-                          : booking.status === "confirmed"
-                          ? "bg-green-100 text-green-600"
-                          : booking.status === "cancelled"
-                          ? "bg-red-100 text-red-600"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      {booking.status.replace("_", " ")}
-                    </span>
+                    <p className="text-sm text-gray-900 truncate">{booking.name}</p>
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusColor(booking.status)}`} />
                   </Link>
                 ))}
-                {bookings.length === 0 && (
-                  <p className="text-sm text-gray-300 py-4">No inquiries yet</p>
-                )}
+                {bookings.length === 0 && <p className="text-xs text-gray-300 py-3">No inquiries yet</p>}
               </div>
             </div>
           </div>
