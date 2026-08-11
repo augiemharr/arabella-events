@@ -1,69 +1,241 @@
+import Link from "next/link";
 import Image from "next/image";
+
+const featuredDishes = [
+  {
+    name: "Bagnet",
+    description: "Crispy deep-fried pork belly, a beloved Ilocano delicacy",
+    image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=400&fit=crop",
+  },
+  {
+    name: "Poqui Poqui",
+    description: "Smoky grilled eggplant with eggs and tomatoes",
+    image: "https://images.unsplash.com/photo-1625943553852-781c6dd46faa?w=600&h=400&fit=crop",
+  },
+  {
+    name: "Dinuguan",
+    description: "Rich pork blood stew, a Filipino classic",
+    image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=400&fit=crop",
+  },
+];
+
+const eventTypes = [
+  { icon: "💒", title: "Weddings", desc: "Elegant celebrations for your special day" },
+  { icon: "🎂", title: "Birthday Parties", desc: "Memorable milestones for all ages" },
+  { icon: "🏢", title: "Corporate Events", desc: "Professional gatherings and functions" },
+  { icon: "🎉", title: "Family Gatherings", desc: "Reunions and celebrations with loved ones" },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <>
+      {/* Hero */}
+      <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden">
         <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
+          src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&h=1080&fit=crop"
+          alt="Arabella Events Place venue"
+          fill
+          className="object-cover"
           priority
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+          <p className="text-[var(--color-accent)] tracking-[0.3em] uppercase text-sm mb-6 font-medium">
+            Laoag City, Ilocos Norte
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <h1
+            className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
+            style={{ fontFamily: "var(--font-playfair)" }}
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Where Every
+            <br />
+            Celebration Begins
+          </h1>
+          <p className="text-gray-200 text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+            Premium events venue and authentic Ilocano catering for weddings,
+            parties, and life&apos;s most cherished moments.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/contact"
+              className="bg-[var(--color-primary)] text-white px-8 py-4 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary-dark)] transition-colors"
+            >
+              Book Your Event
+            </Link>
+            <Link
+              href="/menu"
+              className="border-2 border-white text-white px-8 py-4 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-white hover:text-[var(--color-dark)] transition-colors"
+            >
+              View Menu
+            </Link>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* Event Types */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-[var(--color-primary)] tracking-[0.2em] uppercase text-sm mb-3 font-medium">
+            Perfect For
+          </p>
+          <h2
+            className="text-3xl md:text-4xl font-bold text-[var(--color-dark)] mb-4"
+            style={{ fontFamily: "var(--font-playfair)" }}
+          >
+            Every Occasion
+          </h2>
+          <p className="text-gray-500 max-w-xl mx-auto mb-16">
+            From intimate gatherings to grand celebrations, we bring your vision
+            to life.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {eventTypes.map((event) => (
+              <div
+                key={event.title}
+                className="p-6 rounded-2xl hover:shadow-lg transition-shadow bg-[var(--color-warm-gray)]"
+              >
+                <span className="text-4xl mb-4 block">{event.icon}</span>
+                <h3
+                  className="text-lg font-semibold text-[var(--color-dark)] mb-2"
+                  style={{ fontFamily: "var(--font-playfair)" }}
+                >
+                  {event.title}
+                </h3>
+                <p className="text-sm text-gray-500">{event.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Dishes */}
+      <section className="py-20 bg-[var(--color-cream)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <p className="text-[var(--color-primary)] tracking-[0.2em] uppercase text-sm mb-3 font-medium">
+              Authentic Ilocano
+            </p>
+            <h2
+              className="text-3xl md:text-4xl font-bold text-[var(--color-dark)] mb-4"
+              style={{ fontFamily: "var(--font-playfair)" }}
+            >
+              Signature Dishes
+            </h2>
+            <p className="text-gray-500 max-w-xl mx-auto">
+              Savor the rich flavors of Ilocano cuisine, prepared with
+              tradition and love.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredDishes.map((dish) => (
+              <div
+                key={dish.name}
+                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-shadow"
+              >
+                <div className="relative h-64 overflow-hidden">
+                  <Image
+                    src={dish.image}
+                    alt={dish.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+                <div className="p-6">
+                  <h3
+                    className="text-xl font-bold text-[var(--color-dark)] mb-2"
+                    style={{ fontFamily: "var(--font-playfair)" }}
+                  >
+                    {dish.name}
+                  </h3>
+                  <p className="text-gray-500 text-sm">{dish.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/menu"
+              className="inline-block bg-[var(--color-primary)] text-white px-8 py-3.5 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary-dark)] transition-colors"
+            >
+              Full Menu
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Gallery Preview */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <p className="text-[var(--color-primary)] tracking-[0.2em] uppercase text-sm mb-3 font-medium">
+              See Our Space
+            </p>
+            <h2
+              className="text-3xl md:text-4xl font-bold text-[var(--color-dark)] mb-4"
+              style={{ fontFamily: "var(--font-playfair)" }}
+            >
+              Gallery
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&h=600&fit=crop",
+              "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&h=600&fit=crop",
+              "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&h=600&fit=crop",
+              "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&h=600&fit=crop",
+            ].map((src, i) => (
+              <div
+                key={i}
+                className="relative aspect-square rounded-2xl overflow-hidden group"
+              >
+                <Image
+                  src={src}
+                  alt={`Gallery image ${i + 1}`}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-12">
+            <Link
+              href="/gallery"
+              className="inline-block border-2 border-[var(--color-primary)] text-[var(--color-primary)] px-8 py-3.5 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary)] hover:text-white transition-colors"
+            >
+              View All Photos
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative py-24 overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&h=600&fit=crop"
+          alt="Event setup"
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-[var(--color-primary-dark)]/90" />
+        <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
+          <h2
+            className="text-3xl md:text-5xl font-bold text-white mb-6"
+            style={{ fontFamily: "var(--font-playfair)" }}
+          >
+            Ready to Plan Your Event?
+          </h2>
+          <p className="text-white/80 text-lg mb-10">
+            Let us help you create unforgettable memories. Inquire now for venue
+            availability and customized packages.
+          </p>
+          <Link
+            href="/contact"
+            className="inline-block bg-white text-[var(--color-primary-dark)] px-10 py-4 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-gray-100 transition-colors"
+          >
+            Get In Touch
+          </Link>
+        </div>
+      </section>
+    </>
   );
 }
