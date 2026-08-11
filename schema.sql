@@ -10,7 +10,13 @@ CREATE TABLE IF NOT EXISTS bookings (
   event_date DATE,
   pax INTEGER,
   message TEXT,
-  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'confirmed', 'completed')),
+  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'quoted', 'pending_deposit', 'deposit_paid', 'confirmed', 'completed', 'cancelled')),
+  notes TEXT,
+  deposit_amount DECIMAL(10,2) DEFAULT 0,
+  total_amount DECIMAL(10,2) DEFAULT 0,
+  last_contacted_at TIMESTAMP WITH TIME ZONE,
+  deposit_paid BOOLEAN DEFAULT FALSE,
+  final_paid BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -32,8 +38,7 @@ CREATE POLICY "Allow authenticated updates" ON bookings
   FOR UPDATE
   USING (auth.role() = 'authenticated');
 
--- Create admin user (change email/password to your preference)
--- Go to Authentication > Users in Supabase dashboard and add a user manually
--- OR run this:
--- INSERT INTO auth.users (email, password, email_confirmed_at)
--- VALUES ('admin@arabellaevents.ph', crypt('your-password', gen_salt('bf')), now());
+-- Allow authenticated deletes (for admin)
+CREATE POLICY "Allow authenticated deletes" ON bookings
+  FOR DELETE
+  USING (auth.role() = 'authenticated');
