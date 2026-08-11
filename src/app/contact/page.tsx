@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ export default function ContactPage() {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -23,9 +26,30 @@ export default function ContactPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const { error: insertError } = await supabase.from("bookings").insert({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      event_type: formData.eventType,
+      event_date: formData.date || null,
+      pax: formData.pax ? parseInt(formData.pax) : null,
+      message: formData.message || null,
+      status: "new",
+    });
+
+    if (insertError) {
+      setError("Something went wrong. Please try again or call us directly.");
+      setLoading(false);
+      return;
+    }
+
     setSubmitted(true);
+    setLoading(false);
   };
 
   return (
@@ -85,6 +109,12 @@ export default function ContactPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {error && (
+                    <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">
+                      {error}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -140,13 +170,13 @@ export default function ContactPage() {
                         className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition bg-white"
                       >
                         <option value="">Select event type</option>
-                        <option value="wedding">Wedding</option>
-                        <option value="birthday">Birthday Party</option>
-                        <option value="corporate">Corporate Event</option>
-                        <option value="family">Family Gathering</option>
-                        <option value="christening">Christening</option>
-                        <option value="debut">Debut</option>
-                        <option value="other">Other</option>
+                        <option value="Wedding">Wedding</option>
+                        <option value="Birthday Party">Birthday Party</option>
+                        <option value="Corporate Event">Corporate Event</option>
+                        <option value="Family Gathering">Family Gathering</option>
+                        <option value="Christening">Christening</option>
+                        <option value="Debut">Debut</option>
+                        <option value="Other">Other</option>
                       </select>
                     </div>
                     <div>
@@ -190,9 +220,10 @@ export default function ContactPage() {
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-[var(--color-primary)] text-white py-4 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary-dark)] transition-colors"
+                    disabled={loading}
+                    className="w-full bg-[var(--color-primary)] text-white py-4 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
                   >
-                    Send Inquiry
+                    {loading ? "Sending..." : "Send Inquiry"}
                   </button>
                 </form>
               )}
