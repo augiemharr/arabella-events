@@ -188,7 +188,7 @@ export default function AdminDashboard() {
                     <div
                       key={index}
                       onClick={() => day && setSelectedDate(day)}
-                      className={`relative h-20 p-1.5 border-b border-r border-gray-50 transition-colors ${
+                      className={`relative min-h-[4.5rem] p-1.5 border-b border-r border-gray-50 transition-colors ${
                         day ? "cursor-pointer hover:bg-gray-50" : ""
                       } ${isSelected ? "bg-gray-100" : ""}`}
                     >
@@ -199,17 +199,17 @@ export default function AdminDashboard() {
                           </span>
                           {dayBookings.length > 0 && (
                             <div className="mt-1 space-y-0.5">
-                              {dayBookings.slice(0, 2).map((b) => {
+                              {dayBookings.slice(0, 3).map((b) => {
                                 const colors = getEventColor(b.event_type);
                                 return (
-                                  <div key={b.id} className="flex items-center gap-1">
+                                  <div key={b.id} className={`flex items-center gap-1 px-1 py-0.5 rounded ${colors.bg}`}>
                                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colors.dot}`} />
-                                    <span className={`text-[9px] truncate ${colors.text}`}>{b.name.split(" ")[0]}</span>
+                                    <span className={`text-[8px] truncate font-medium ${colors.text}`}>{b.name.split(" ")[0]}</span>
                                   </div>
                                 );
                               })}
-                              {dayBookings.length > 2 && (
-                                <span className="text-[9px] text-gray-400">+{dayBookings.length - 2}</span>
+                              {dayBookings.length > 3 && (
+                                <span className="text-[8px] text-gray-400 pl-1">+{dayBookings.length - 3} more</span>
                               )}
                             </div>
                           )}

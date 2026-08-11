@@ -35,7 +35,6 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
   const [depositAmount, setDepositAmount] = useState("");
   const [savingNotes, setSavingNotes] = useState(false);
   const [savingAmount, setSavingAmount] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   const [templateSubject, setTemplateSubject] = useState("");
   const [templateBody, setTemplateBody] = useState("");
@@ -109,7 +108,6 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
     setSelectedTemplate(index);
     setTemplateSubject(replace(t.subject));
     setTemplateBody(replace(t.body));
-    setShowTemplates(false);
   };
 
   const copyToClipboard = () => {
@@ -181,33 +179,47 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Quick Reply</h2>
-                <button onClick={() => { setShowTemplates(!showTemplates); setSelectedTemplate(null); }} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">
-                  {showTemplates ? "Close" : "Templates"}
-                </button>
-              </div>
+              <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Quick Reply</h2>
 
-              {showTemplates && (
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  {RESPONSE_TEMPLATES.map((t, i) => (
-                    <button key={t.name} onClick={() => fillTemplate(i)} className="text-left p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors">
-                      <p className="text-xs font-medium text-gray-900">{t.name}</p>
-                      <p className="text-[10px] text-gray-400 mt-0.5 truncate">{t.subject}</p>
-                    </button>
-                  ))}
+              {selectedTemplate === null && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    {RESPONSE_TEMPLATES.map((t, i) => (
+                      <button key={t.name} onClick={() => fillTemplate(i)} className="text-left p-3 rounded-lg border border-gray-200 hover:border-gray-900 hover:bg-gray-50 transition-all">
+                        <p className="text-xs font-medium text-gray-900">{t.name}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{t.subject}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2 pt-2 border-t border-gray-100">
+                    <a href={"mailto:" + booking.email + "?subject=" + encodeURIComponent("Re: " + booking.event_type + " Inquiry") + "&body=" + encodeURIComponent("Hi " + booking.name + ",\n\n")}
+                      className="flex-1 text-center py-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                      Blank Email
+                    </a>
+                    <a href={"tel:" + booking.phone} className="flex-1 text-center py-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                      Call
+                    </a>
+                    <a href={"https://wa.me/" + booking.phone.replace(/[^0-9]/g, "")} target="_blank" rel="noopener noreferrer"
+                      className="flex-1 text-center py-2.5 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 transition-colors">
+                      WhatsApp
+                    </a>
+                  </div>
                 </div>
               )}
 
               {selectedTemplate !== null && (
-                <div className="border border-gray-100 rounded-lg p-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-medium text-gray-900">{RESPONSE_TEMPLATES[selectedTemplate].name}</span>
+                    <button onClick={() => setSelectedTemplate(null)} className="text-[10px] text-gray-400 hover:text-gray-600">Back to templates</button>
+                  </div>
                   <div className="mb-3">
                     <label className="text-[10px] text-gray-400 block mb-1">Subject</label>
                     <input value={templateSubject} onChange={(e) => setTemplateSubject(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 outline-none" />
                   </div>
                   <div className="mb-3">
                     <label className="text-[10px] text-gray-400 block mb-1">Body</label>
-                    <textarea value={templateBody} onChange={(e) => setTemplateBody(e.target.value)} rows={8} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 outline-none resize-none" />
+                    <textarea value={templateBody} onChange={(e) => setTemplateBody(e.target.value)} rows={10} className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 outline-none resize-none leading-relaxed" />
                   </div>
                   <div className="flex gap-2">
                     <button onClick={copyToClipboard} className="px-4 py-2 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
@@ -217,22 +229,6 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
                       Open in Email
                     </button>
                   </div>
-                </div>
-              )}
-
-              {selectedTemplate === null && !showTemplates && (
-                <div className="flex gap-2">
-                  <a href={"mailto:" + booking.email + "?subject=" + encodeURIComponent("Re: " + booking.event_type + " Inquiry") + "&body=" + encodeURIComponent("Hi " + booking.name + ",\n\n")}
-                    className="flex-1 text-center py-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                    Reply via Email
-                  </a>
-                  <a href={"tel:" + booking.phone} className="flex-1 text-center py-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-                    Call
-                  </a>
-                  <a href={"https://wa.me/" + booking.phone.replace(/[^0-9]/g, "")} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 text-center py-2.5 rounded-lg bg-green-600 text-white text-xs font-medium hover:bg-green-700 transition-colors">
-                    WhatsApp
-                  </a>
                 </div>
               )}
             </div>
