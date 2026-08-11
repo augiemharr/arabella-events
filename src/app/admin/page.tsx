@@ -23,7 +23,17 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const EVENT_COLORS: Record<string, { bg: string; dot: string; text: string }> = {
+  Wedding: { bg: "bg-pink-100", dot: "bg-pink-500", text: "text-pink-700" },
+  "Birthday Party": { bg: "bg-blue-100", dot: "bg-blue-500", text: "text-blue-700" },
+  "Corporate Event": { bg: "bg-slate-100", dot: "bg-slate-500", text: "text-slate-700" },
+  "Family Gathering": { bg: "bg-amber-100", dot: "bg-amber-500", text: "text-amber-700" },
+  Christening: { bg: "bg-violet-100", dot: "bg-violet-500", text: "text-violet-700" },
+  Debut: { bg: "bg-rose-100", dot: "bg-rose-500", text: "text-rose-700" },
+  Other: { bg: "bg-gray-100", dot: "bg-gray-500", text: "text-gray-700" },
+};
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -105,11 +115,8 @@ export default function AdminDashboard() {
 
   const selectedBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
 
-  const getStatusColor = (status: string) => {
-    if (status === "confirmed" || status === "deposit_paid") return "bg-green-500";
-    if (status === "cancelled") return "bg-red-400";
-    if (status === "new") return "bg-blue-500";
-    return "bg-amber-400";
+  const getEventColor = (eventType: string) => {
+    return EVENT_COLORS[eventType] || EVENT_COLORS["Other"];
   };
 
   if (loading) {
@@ -122,7 +129,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-base font-semibold text-gray-900" style={{ fontFamily: "var(--font-playfair)" }}>
@@ -153,7 +159,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="flex gap-10">
-          {/* Calendar - Compact */}
+          {/* Calendar */}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-gray-900" style={{ fontFamily: "var(--font-playfair)" }}>
@@ -165,28 +171,24 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Compact Calendar */}
             <div className="border border-gray-100 rounded-lg">
-              {/* Day Headers */}
               <div className="grid grid-cols-7 border-b border-gray-100">
                 {DAYS.map((day) => (
                   <div key={day} className="py-2 text-center text-[10px] font-medium text-gray-400">{day}</div>
                 ))}
               </div>
 
-              {/* Calendar Days */}
               <div className="grid grid-cols-7">
                 {calendarDays.map((day, index) => {
                   const dayBookings = day ? getBookingsForDate(day) : [];
                   const isToday = day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
                   const isSelected = day === selectedDate;
-                  const hasEvents = dayBookings.length > 0;
 
                   return (
                     <div
                       key={index}
                       onClick={() => day && setSelectedDate(day)}
-                      className={`relative h-16 p-1.5 border-b border-r border-gray-50 transition-colors ${
+                      className={`relative h-20 p-1.5 border-b border-r border-gray-50 transition-colors ${
                         day ? "cursor-pointer hover:bg-gray-50" : ""
                       } ${isSelected ? "bg-gray-100" : ""}`}
                     >
@@ -195,14 +197,17 @@ export default function AdminDashboard() {
                           <span className={`text-xs ${isToday ? "bg-gray-900 text-white w-5 h-5 rounded-full flex items-center justify-center font-medium" : "text-gray-600"}`}>
                             {day}
                           </span>
-                          {hasEvents && (
+                          {dayBookings.length > 0 && (
                             <div className="mt-1 space-y-0.5">
-                              {dayBookings.slice(0, 2).map((b) => (
-                                <div key={b.id} className="flex items-center gap-1">
-                                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusColor(b.status)}`} />
-                                  <span className="text-[9px] text-gray-600 truncate">{b.name.split(" ")[0]}</span>
-                                </div>
-                              ))}
+                              {dayBookings.slice(0, 2).map((b) => {
+                                const colors = getEventColor(b.event_type);
+                                return (
+                                  <div key={b.id} className="flex items-center gap-1">
+                                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${colors.dot}`} />
+                                    <span className={`text-[9px] truncate ${colors.text}`}>{b.name.split(" ")[0]}</span>
+                                  </div>
+                                );
+                              })}
                               {dayBookings.length > 2 && (
                                 <span className="text-[9px] text-gray-400">+{dayBookings.length - 2}</span>
                               )}
@@ -216,42 +221,87 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Legend */}
-            <div className="flex gap-4 mt-3 text-[10px] text-gray-400">
-              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500" /> New</div>
-              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> Pending</div>
-              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500" /> Confirmed</div>
-              <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-400" /> Cancelled</div>
+            {/* Event Type Legend */}
+            <div className="flex flex-wrap gap-3 mt-3">
+              {Object.entries(EVENT_COLORS).filter(([key]) => key !== "Other").map(([type, colors]) => (
+                <div key={type} className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                  <span className={`w-2 h-2 rounded-full ${colors.dot}`} />
+                  {type}
+                </div>
+              ))}
             </div>
 
-            {/* Selected Date Events */}
+            {/* Selected Date - Availability */}
             {selectedDate && (
               <div className="mt-6 border-t border-gray-100 pt-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  {MONTHS[currentMonth]} {selectedDate}, {currentYear}
-                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    {MONTHS[currentMonth]} {selectedDate}, {currentYear}
+                  </h3>
+                  {selectedBookings.length === 0 ? (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                      Available
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                      {selectedBookings.length} Booking{selectedBookings.length > 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+
                 {selectedBookings.length === 0 ? (
-                  <p className="text-sm text-gray-400">No events on this date</p>
+                  <div className="py-6 text-center border border-dashed border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-400 mb-2">No events on this date</p>
+                    <Link
+                      href="/contact"
+                      className="text-xs text-gray-900 font-medium hover:underline"
+                    >
+                      + Create booking
+                    </Link>
+                  </div>
                 ) : (
                   <div className="space-y-2">
-                    {selectedBookings.map((booking) => (
-                      <Link
-                        key={booking.id}
-                        href={`/admin/inquiries/${booking.id}`}
-                        className="flex items-center justify-between p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className={`w-2 h-2 rounded-full ${getStatusColor(booking.status)}`} />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{booking.name}</p>
-                            <p className="text-xs text-gray-400">{booking.event_type} · {booking.pax || "-"} pax</p>
+                    {selectedBookings.map((booking) => {
+                      const colors = getEventColor(booking.event_type);
+                      return (
+                        <Link
+                          key={booking.id}
+                          href={`/admin/inquiries/${booking.id}`}
+                          className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:border-gray-300 ${
+                            booking.status === "cancelled"
+                              ? "border-red-200 bg-red-50"
+                              : booking.status === "confirmed"
+                              ? "border-green-200 bg-green-50"
+                              : "border-gray-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colors.bg}`}>
+                              <span className={`text-xs font-bold ${colors.text}`}>
+                                {booking.event_type.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{booking.name}</p>
+                              <p className="text-xs text-gray-400">
+                                {booking.event_type} · {booking.pax || "-"} pax
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                          {booking.status.replace("_", " ")}
-                        </span>
-                      </Link>
-                    ))}
+                          <div className="text-right">
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                              booking.status === "confirmed"
+                                ? "bg-green-100 text-green-700"
+                                : booking.status === "cancelled"
+                                ? "bg-red-100 text-red-600"
+                                : "bg-gray-100 text-gray-600"
+                            }`}>
+                              {booking.status.replace("_", " ")}
+                            </span>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -260,7 +310,6 @@ export default function AdminDashboard() {
 
           {/* Sidebar */}
           <div className="w-64 space-y-8">
-            {/* Upcoming */}
             <div>
               <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">Upcoming</h2>
               <div className="space-y-0">
@@ -268,45 +317,53 @@ export default function AdminDashboard() {
                   .filter((b) => b.event_date && new Date(b.event_date) >= new Date() && b.status !== "cancelled")
                   .sort((a, b) => new Date(a.event_date!).getTime() - new Date(b.event_date!).getTime())
                   .slice(0, 5)
-                  .map((booking) => (
-                    <Link
-                      key={booking.id}
-                      href={`/admin/inquiries/${booking.id}`}
-                      className="flex items-center gap-3 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
-                    >
-                      <div className="w-9 text-center">
-                        <p className="text-[9px] text-gray-400 uppercase">{new Date(booking.event_date!).toLocaleDateString("en-US", { month: "short" })}</p>
-                        <p className="text-sm font-semibold text-gray-900">{new Date(booking.event_date!).getDate()}</p>
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{booking.name}</p>
-                        <p className="text-xs text-gray-400 truncate">{booking.event_type}</p>
-                      </div>
-                    </Link>
-                  ))}
+                  .map((booking) => {
+                    const colors = getEventColor(booking.event_type);
+                    return (
+                      <Link
+                        key={booking.id}
+                        href={`/admin/inquiries/${booking.id}`}
+                        className="flex items-center gap-3 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
+                      >
+                        <div className="w-9 text-center">
+                          <p className="text-[9px] text-gray-400 uppercase">{new Date(booking.event_date!).toLocaleDateString("en-US", { month: "short" })}</p>
+                          <p className="text-sm font-semibold text-gray-900">{new Date(booking.event_date!).getDate()}</p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{booking.name}</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+                            <p className="text-xs text-gray-400 truncate">{booking.event_type}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 {bookings.filter((b) => b.event_date && new Date(b.event_date) >= new Date() && b.status !== "cancelled").length === 0 && (
                   <p className="text-xs text-gray-300 py-3">No upcoming events</p>
                 )}
               </div>
             </div>
 
-            {/* Recent */}
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Recent</h2>
                 <Link href="/admin/inquiries" className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-wider">All</Link>
               </div>
               <div className="space-y-0">
-                {bookings.slice(0, 4).map((booking) => (
-                  <Link
-                    key={booking.id}
-                    href={`/admin/inquiries/${booking.id}`}
-                    className="flex items-center justify-between py-2.5 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
-                  >
-                    <p className="text-sm text-gray-900 truncate">{booking.name}</p>
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusColor(booking.status)}`} />
-                  </Link>
-                ))}
+                {bookings.slice(0, 4).map((booking) => {
+                  const colors = getEventColor(booking.event_type);
+                  return (
+                    <Link
+                      key={booking.id}
+                      href={`/admin/inquiries/${booking.id}`}
+                      className="flex items-center justify-between py-2.5 border-b border-gray-50 hover:bg-gray-50 transition-colors -mx-2 px-2 rounded"
+                    >
+                      <p className="text-sm text-gray-900 truncate">{booking.name}</p>
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${colors.dot}`} />
+                    </Link>
+                  );
+                })}
                 {bookings.length === 0 && <p className="text-xs text-gray-300 py-3">No inquiries yet</p>}
               </div>
             </div>
