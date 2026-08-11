@@ -52,12 +52,8 @@ export default function AdminDashboard() {
   const stats = {
     total: bookings.length,
     new: bookings.filter((b) => b.status === "new").length,
-    contacted: bookings.filter((b) => b.status === "contacted").length,
-    quoted: bookings.filter((b) => b.status === "quoted").length,
     pendingDeposit: bookings.filter((b) => b.status === "pending_deposit").length,
     confirmed: bookings.filter((b) => b.status === "confirmed").length,
-    completed: bookings.filter((b) => b.status === "completed").length,
-    cancelled: bookings.filter((b) => b.status === "cancelled").length,
     totalRevenue: bookings.reduce((sum, b) => sum + (b.total_amount || 0), 0),
     depositsReceived: bookings.reduce((sum, b) => sum + (b.deposit_amount || 0), 0),
     upcomingEvents: bookings.filter(
@@ -67,8 +63,6 @@ export default function AdminDashboard() {
         b.status !== "cancelled"
     ).length,
   };
-
-  const recentBookings = bookings.slice(0, 5);
 
   const urgentInquiries = bookings.filter(
     (b) =>
@@ -107,16 +101,14 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-[var(--color-cream)]">
       {/* Header */}
       <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div>
-            <h1
-              className="text-xl font-bold text-[var(--color-dark)]"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              Arabella Admin
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+          <h1
+            className="text-lg font-bold text-[var(--color-dark)]"
+            style={{ fontFamily: "var(--font-playfair)" }}
+          >
+            Arabella Admin
+          </h1>
+          <div className="flex items-center gap-6">
             <Link
               href="/"
               className="text-sm text-gray-500 hover:text-[var(--color-primary)] transition-colors"
@@ -133,138 +125,109 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-10">
         {/* Urgent Alert */}
         {urgentInquiries.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
-            <span className="text-red-600 font-bold">!</span>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8 flex items-center justify-between">
             <p className="text-red-700 text-sm">
-              <strong>{urgentInquiries.length} inquiry(s)</strong> haven&apos;t been responded to in over 24 hours.
+              <strong>{urgentInquiries.length}</strong> inquiry(s) unanswered for 24+ hours
             </p>
             <Link
               href="/admin/inquiries"
-              className="ml-auto text-red-700 text-sm font-medium hover:underline"
+              className="text-red-700 text-sm font-medium hover:underline"
             >
-              View All
+              View
             </Link>
           </div>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: "Total Inquiries", value: stats.total, color: "text-[var(--color-dark)]" },
-            { label: "New", value: stats.new, color: "text-blue-600" },
-            { label: "Pending Deposit", value: stats.pendingDeposit, color: "text-orange-600" },
-            { label: "Confirmed", value: stats.confirmed, color: "text-green-600" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-xl p-4 text-center">
-              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mt-1">
-                {stat.label}
-              </p>
-            </div>
-          ))}
+        {/* Main Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-10">
+          <div className="bg-white rounded-xl p-5 text-center">
+            <p className="text-3xl font-bold text-[var(--color-dark)]">{stats.total}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">Inquiries</p>
+          </div>
+          <div className="bg-white rounded-xl p-5 text-center">
+            <p className="text-3xl font-bold text-blue-600">{stats.new}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">New</p>
+          </div>
+          <div className="bg-white rounded-xl p-5 text-center">
+            <p className="text-3xl font-bold text-orange-500">{stats.pendingDeposit}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">Awaiting Deposit</p>
+          </div>
+          <div className="bg-white rounded-xl p-5 text-center">
+            <p className="text-3xl font-bold text-green-600">{stats.confirmed}</p>
+            <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">Confirmed</p>
+          </div>
         </div>
 
-        {/* Revenue Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-6">
-            <p className="text-sm text-gray-500 mb-1">Total Revenue (Quoted)</p>
-            <p className="text-3xl font-bold text-[var(--color-dark)]">
+        {/* Revenue Row */}
+        <div className="grid grid-cols-3 gap-4 mb-10">
+          <div className="bg-white rounded-xl p-5">
+            <p className="text-xs text-gray-400 uppercase tracking-wider">Total Quoted</p>
+            <p className="text-2xl font-bold text-[var(--color-dark)] mt-1">
               ₱{stats.totalRevenue.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-6">
-            <p className="text-sm text-gray-500 mb-1">Deposits Received</p>
-            <p className="text-3xl font-bold text-green-600">
+          <div className="bg-white rounded-xl p-5">
+            <p className="text-xs text-gray-400 uppercase tracking-wider">Deposits</p>
+            <p className="text-2xl font-bold text-green-600 mt-1">
               ₱{stats.depositsReceived.toLocaleString()}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-6">
-            <p className="text-sm text-gray-500 mb-1">Upcoming Events</p>
-            <p className="text-3xl font-bold text-[var(--color-primary)]">
+          <div className="bg-white rounded-xl p-5">
+            <p className="text-xs text-gray-400 uppercase tracking-wider">Upcoming Events</p>
+            <p className="text-2xl font-bold text-[var(--color-primary)] mt-1">
               {stats.upcomingEvents}
             </p>
           </div>
         </div>
 
-        {/* Status Breakdown */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-8">
-          <h2
-            className="text-lg font-bold text-[var(--color-dark)] mb-4"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            Pipeline Overview
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "New", value: stats.new, status: "new" },
-              { label: "Contacted", value: stats.contacted, status: "contacted" },
-              { label: "Quoted", value: stats.quoted, status: "quoted" },
-              { label: "Pending Deposit", value: stats.pendingDeposit, status: "pending_deposit" },
-              { label: "Deposit Paid", value: stats.depositsReceived > 0 ? stats.confirmed : 0, status: "deposit_paid" },
-              { label: "Confirmed", value: stats.confirmed, status: "confirmed" },
-              { label: "Completed", value: stats.completed, status: "completed" },
-              { label: "Cancelled", value: stats.cancelled, status: "cancelled" },
-            ].map((item) => (
-              <div key={item.status} className="text-center p-3 rounded-lg bg-gray-50">
-                <p className="text-xl font-bold text-[var(--color-dark)]">{item.value}</p>
-                <p className="text-xs text-gray-500 mt-1">{item.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Two Columns */}
+        <div className="grid grid-cols-2 gap-6">
           {/* Recent Inquiries */}
-          <div className="bg-white rounded-2xl shadow-sm">
-            <div className="p-6 border-b flex justify-between items-center">
+          <div className="bg-white rounded-xl">
+            <div className="px-6 py-4 border-b flex justify-between items-center">
               <h2
-                className="text-lg font-bold text-[var(--color-dark)]"
+                className="font-bold text-[var(--color-dark)]"
                 style={{ fontFamily: "var(--font-playfair)" }}
               >
                 Recent Inquiries
               </h2>
               <Link
                 href="/admin/inquiries"
-                className="text-sm text-[var(--color-primary)] hover:underline"
+                className="text-xs text-[var(--color-primary)] hover:underline"
               >
                 View All
               </Link>
             </div>
             <div className="divide-y">
-              {recentBookings.length === 0 ? (
-                <div className="p-8 text-center text-gray-500">
-                  No inquiries yet.
+              {bookings.length === 0 ? (
+                <div className="p-8 text-center text-gray-400 text-sm">
+                  No inquiries yet
                 </div>
               ) : (
-                recentBookings.map((booking) => (
+                bookings.slice(0, 5).map((booking) => (
                   <Link
                     key={booking.id}
                     href={`/admin/inquiries/${booking.id}`}
-                    className="block p-4 hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-[var(--color-dark)] text-sm">
-                          {booking.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {booking.event_type}
-                          {booking.event_date
-                            ? ` - ${new Date(booking.event_date).toLocaleDateString()}`
-                            : ""}
-                        </p>
-                      </div>
-                      <span
-                        className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusColor(
-                          booking.status
-                        )}`}
-                      >
-                        {booking.status.replace("_", " ")}
-                      </span>
+                    <div>
+                      <p className="font-medium text-sm text-[var(--color-dark)]">
+                        {booking.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {booking.event_type}
+                      </p>
                     </div>
+                    <span
+                      className={`text-[10px] font-medium px-2 py-1 rounded-full ${getStatusColor(
+                        booking.status
+                      )}`}
+                    >
+                      {booking.status.replace("_", " ")}
+                    </span>
                   </Link>
                 ))
               )}
@@ -272,10 +235,10 @@ export default function AdminDashboard() {
           </div>
 
           {/* Upcoming Events */}
-          <div className="bg-white rounded-2xl shadow-sm">
-            <div className="p-6 border-b">
+          <div className="bg-white rounded-xl">
+            <div className="px-6 py-4 border-b">
               <h2
-                className="text-lg font-bold text-[var(--color-dark)]"
+                className="font-bold text-[var(--color-dark)]"
                 style={{ fontFamily: "var(--font-playfair)" }}
               >
                 Upcoming Events
@@ -299,32 +262,22 @@ export default function AdminDashboard() {
                   <Link
                     key={booking.id}
                     href={`/admin/inquiries/${booking.id}`}
-                    className="block p-4 hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold text-[var(--color-dark)] text-sm">
-                          {booking.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {booking.event_type} - {booking.pax} pax
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-[var(--color-dark)]">
-                          {new Date(booking.event_date!).toLocaleDateString(
-                            "en-US",
-                            { month: "short", day: "numeric" }
-                          )}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(booking.event_date!).toLocaleDateString(
-                            "en-US",
-                            { weekday: "short" }
-                          )}
-                        </p>
-                      </div>
+                    <div>
+                      <p className="font-medium text-sm text-[var(--color-dark)]">
+                        {booking.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {booking.event_type} · {booking.pax} pax
+                      </p>
                     </div>
+                    <p className="text-sm font-medium text-[var(--color-dark)]">
+                      {new Date(booking.event_date!).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
                   </Link>
                 ))}
               {bookings.filter(
@@ -333,8 +286,8 @@ export default function AdminDashboard() {
                   new Date(b.event_date) >= new Date() &&
                   b.status !== "cancelled"
               ).length === 0 && (
-                <div className="p-8 text-center text-gray-500">
-                  No upcoming events.
+                <div className="p-8 text-center text-gray-400 text-sm">
+                  No upcoming events
                 </div>
               )}
             </div>
