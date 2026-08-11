@@ -72,7 +72,7 @@ export default function ContactPage() {
 
               {submitted ? (
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center">
-                  <span className="text-4xl mb-4 block">✓</span>
+                  <span className="text-4xl mb-4 block text-green-600 font-bold">/</span>
                   <h3
                     className="text-xl font-bold text-green-800 mb-2"
                     style={{ fontFamily: "var(--font-playfair)" }}

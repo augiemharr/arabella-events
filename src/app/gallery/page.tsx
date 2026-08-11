@@ -1,4 +1,5 @@
 import Image from "next/image";
+import ScrollReveal from "@/components/ScrollReveal";
 
 const galleryImages = [
   { src: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop", alt: "Wedding reception setup", category: "Events" },
@@ -46,27 +47,32 @@ export default function GalleryPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {galleryImages.map((img, i) => (
-              <div
+              <ScrollReveal
                 key={i}
-                className={`relative rounded-2xl overflow-hidden group ${
-                  i === 0 || i === 5 ? "md:col-span-2 md:row-span-2" : ""
-                } ${i === 0 ? "aspect-[4/3]" : "aspect-square"}`}
+                delay={i * 60}
+                className={i === 0 || i === 5 ? "md:col-span-2 md:row-span-2" : ""}
               >
-                <Image
-                  src={img.src}
-                  alt={img.alt}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-end p-4">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-white text-xs font-medium bg-[var(--color-primary)]/80 px-2 py-1 rounded-full">
-                      {img.category}
-                    </span>
-                    <p className="text-white text-sm mt-1">{img.alt}</p>
+                <div
+                  className={`relative rounded-2xl overflow-hidden group ${
+                    i === 0 || i === 5 ? "aspect-[4/3]" : "aspect-square"
+                  }`}
+                >
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-end p-4">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <span className="text-white text-xs font-medium bg-[var(--color-primary)]/80 px-2 py-1 rounded-full">
+                        {img.category}
+                      </span>
+                      <p className="text-white text-sm mt-1">{img.alt}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -74,24 +80,26 @@ export default function GalleryPage() {
 
       {/* CTA */}
       <section className="py-16 bg-[var(--color-cream)]">
-        <div className="max-w-3xl mx-auto text-center px-4">
-          <h2
-            className="text-2xl md:text-3xl font-bold text-[var(--color-dark)] mb-4"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            Love What You See?
-          </h2>
-          <p className="text-gray-500 mb-8">
-            Schedule a venue visit to experience Arabella Events Place in
-            person.
-          </p>
-          <a
-            href="/contact"
-            className="inline-block bg-[var(--color-primary)] text-white px-8 py-3.5 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary-dark)] transition-colors"
-          >
-            Schedule a Visit
-          </a>
-        </div>
+        <ScrollReveal>
+          <div className="max-w-3xl mx-auto text-center px-4">
+            <h2
+              className="text-2xl md:text-3xl font-bold text-[var(--color-dark)] mb-4"
+              style={{ fontFamily: "var(--font-playfair)" }}
+            >
+              Love What You See?
+            </h2>
+            <p className="text-gray-500 mb-8">
+              Schedule a venue visit to experience Arabella Events Place in
+              person.
+            </p>
+            <a
+              href="/contact"
+              className="inline-block bg-[var(--color-primary)] text-white px-8 py-3.5 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary-dark)] transition-colors"
+            >
+              Schedule a Visit
+            </a>
+          </div>
+        </ScrollReveal>
       </section>
     </>
   );
