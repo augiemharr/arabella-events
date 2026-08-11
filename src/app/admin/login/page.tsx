@@ -32,67 +32,59 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)] flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-10">
           <h1
-            className="text-3xl font-bold text-[var(--color-dark)]"
+            className="text-lg font-semibold text-gray-900"
             style={{ fontFamily: "var(--font-playfair)" }}
           >
             Arabella Admin
           </h1>
-          <p className="text-gray-500 mt-2">Sign in to manage bookings</p>
+          <p className="text-xs text-gray-400 mt-1 uppercase tracking-wider">
+            Sign in to continue
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">
-                {error}
-              </div>
-            )}
+        <form onSubmit={handleLogin} className="space-y-5">
+          {error && (
+            <p className="text-xs text-red-500">{error}</p>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition"
-                placeholder="admin@arabellaevents.ph"
-              />
-            </div>
+          <div>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 focus:border-gray-300 outline-none transition placeholder-gray-300"
+              placeholder="Email"
+            />
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition"
-                placeholder="Enter your password"
-              />
-            </div>
+          <div>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 focus:border-gray-300 outline-none transition placeholder-gray-300"
+              placeholder="Password"
+            />
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[var(--color-primary)] text-white py-3.5 rounded-full text-sm font-semibold tracking-widest uppercase hover:bg-[var(--color-primary-dark)] transition-colors disabled:opacity-50"
-            >
-              {loading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gray-900 text-white py-3 rounded-lg text-xs font-medium uppercase tracking-wider hover:bg-gray-800 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
-          <a href="/" className="hover:text-[var(--color-primary)] transition-colors">
-            Back to website
+        <p className="text-center text-xs text-gray-300 mt-8">
+          <a href="/" className="hover:text-gray-500 transition-colors">
+            Back to site
           </a>
         </p>
       </div>

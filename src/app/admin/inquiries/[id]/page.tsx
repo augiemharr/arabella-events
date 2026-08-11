@@ -147,9 +147,7 @@ export default function InquiryDetailPage({
 
   const handleDelete = async () => {
     if (!booking) return;
-    if (!confirm("Are you sure you want to delete this inquiry? This cannot be undone.")) {
-      return;
-    }
+    if (!confirm("Delete this inquiry?")) return;
 
     const { error } = await supabase
       .from("bookings")
@@ -168,194 +166,111 @@ export default function InquiryDetailPage({
 
   if (loading || !booking) {
     return (
-      <div className="min-h-screen bg-[var(--color-cream)] flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Loading...</p>
       </div>
     );
   }
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      new: "bg-blue-100 text-blue-700",
-      contacted: "bg-yellow-100 text-yellow-700",
-      quoted: "bg-purple-100 text-purple-700",
-      pending_deposit: "bg-orange-100 text-orange-700",
-      deposit_paid: "bg-green-100 text-green-700",
-      confirmed: "bg-green-100 text-green-700",
-      completed: "bg-gray-100 text-gray-700",
-      cancelled: "bg-red-100 text-red-700",
-    };
-    return colors[status] || "bg-gray-100 text-gray-700";
-  };
-
   const statusFlow = [
-    "new",
-    "contacted",
-    "quoted",
-    "pending_deposit",
-    "deposit_paid",
-    "confirmed",
-    "completed",
+    "new", "contacted", "quoted", "pending_deposit", "deposit_paid", "confirmed", "completed",
   ];
-
   const currentStatusIndex = statusFlow.indexOf(booking.status);
 
   return (
-    <div className="min-h-screen bg-[var(--color-cream)]">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
+      <header className="border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-8 py-5 flex justify-between items-center">
+          <div className="flex items-center gap-6">
             <Link
               href="/admin/inquiries"
-              className="text-[var(--color-primary)] hover:underline text-sm"
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider"
             >
-              Back to Inquiries
+              Back
             </Link>
+            <h1
+              className="text-base font-semibold text-gray-900"
+              style={{ fontFamily: "var(--font-playfair)" }}
+            >
+              {booking.name}
+            </h1>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <Link
               href="/"
-              className="text-sm text-gray-500 hover:text-[var(--color-primary)] transition-colors"
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider"
             >
-              View Site
+              Site
             </Link>
             <button
               onClick={handleLogout}
-              className="text-sm text-gray-500 hover:text-red-600 transition-colors"
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider"
             >
-              Sign Out
+              Logout
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Name and Status */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1
-                className="text-2xl font-bold text-[var(--color-dark)]"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                {booking.name}
-              </h1>
-              <p className="text-gray-500 text-sm mt-1">
-                Submitted {new Date(booking.created_at).toLocaleDateString()} at{" "}
-                {new Date(booking.created_at).toLocaleTimeString()}
-                {booking.last_contacted_at && (
-                  <span className="ml-2">
-                    | Last contacted{" "}
-                    {new Date(booking.last_contacted_at).toLocaleDateString()}
-                  </span>
-                )}
-              </p>
-            </div>
-            <span
-              className={`text-sm font-medium px-3 py-1.5 rounded-full ${getStatusColor(
-                booking.status
-              )}`}
-            >
-              {booking.status.replace("_", " ")}
-            </span>
-          </div>
-
-          {/* Status Progress */}
-          <div className="mb-6">
-            <div className="flex items-center gap-1">
-              {statusFlow.map((s, i) => (
-                <div key={s} className="flex items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                      i <= currentStatusIndex
-                        ? "bg-[var(--color-primary)] text-white"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    {i + 1}
-                  </div>
-                  {i < statusFlow.length - 1 && (
-                    <div
-                      className={`h-1 w-8 ${
-                        i < currentStatusIndex
-                          ? "bg-[var(--color-primary)]"
-                          : "bg-gray-200"
-                      }`}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-gray-500">
-              {statusFlow.map((s) => (
-                <span key={s} className="w-8 text-center">
-                  {s.replace("_", " ").slice(0, 3)}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Status Actions */}
-          <div className="flex gap-2 flex-wrap">
-            {statusFlow.map((s) => (
+      <main className="max-w-6xl mx-auto px-8 py-10">
+        {/* Status Bar */}
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-2">
+            {statusFlow.map((s, i) => (
               <button
                 key={s}
                 onClick={() => updateStatus(s)}
-                disabled={updating || booking.status === s}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors disabled:opacity-50 ${
+                disabled={updating}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-medium transition-colors disabled:opacity-50 ${
                   booking.status === s
-                    ? "bg-[var(--color-primary)] text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-gray-900 text-white"
+                    : i <= currentStatusIndex
+                    ? "bg-gray-200 text-gray-600"
+                    : "bg-gray-50 text-gray-400 hover:bg-gray-100"
                 }`}
               >
                 {s.replace("_", " ")}
               </button>
             ))}
-            <button
-              onClick={() => updateStatus("cancelled")}
-              disabled={updating || booking.status === "cancelled"}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors disabled:opacity-50 ${
-                booking.status === "cancelled"
-                  ? "bg-red-500 text-white"
-                  : "bg-red-50 text-red-600 hover:bg-red-100"
-              }`}
-            >
-              Cancel
-            </button>
           </div>
+
+          <button
+            onClick={() => updateStatus("cancelled")}
+            disabled={booking.status === "cancelled"}
+            className={`px-3 py-1.5 rounded-full text-[10px] font-medium transition-colors disabled:opacity-50 ${
+              booking.status === "cancelled"
+                ? "bg-red-500 text-white"
+                : "bg-red-50 text-red-500 hover:bg-red-100"
+            }`}
+          >
+            Cancel
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Info */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Contact Details */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2
-                className="text-lg font-bold text-[var(--color-dark)] mb-4"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Contact Details
+        <div className="grid grid-cols-3 gap-10">
+          {/* Main Content */}
+          <div className="col-span-2 space-y-8">
+            {/* Contact */}
+            <div>
+              <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">
+                Contact
               </h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                    Email
-                  </p>
+                  <p className="text-xs text-gray-400 mb-1">Email</p>
                   <a
                     href={`mailto:${booking.email}`}
-                    className="text-[var(--color-dark)] hover:text-[var(--color-primary)] transition-colors text-sm"
+                    className="text-sm text-gray-900 hover:text-gray-600 transition-colors"
                   >
                     {booking.email}
                   </a>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                    Phone
-                  </p>
+                  <p className="text-xs text-gray-400 mb-1">Phone</p>
                   <a
                     href={`tel:${booking.phone}`}
-                    className="text-[var(--color-dark)] hover:text-[var(--color-primary)] transition-colors text-sm"
+                    className="text-sm text-gray-900 hover:text-gray-600 transition-colors"
                   >
                     {booking.phone}
                   </a>
@@ -363,57 +278,40 @@ export default function InquiryDetailPage({
               </div>
             </div>
 
-            {/* Event Details */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2
-                className="text-lg font-bold text-[var(--color-dark)] mb-4"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Event Details
+            {/* Event */}
+            <div>
+              <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">
+                Event
               </h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-6">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                    Event Type
-                  </p>
-                  <p className="text-[var(--color-dark)] text-sm">
-                    {booking.event_type}
-                  </p>
+                  <p className="text-xs text-gray-400 mb-1">Type</p>
+                  <p className="text-sm text-gray-900">{booking.event_type}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                    Event Date
-                  </p>
-                  <p className="text-[var(--color-dark)] text-sm">
+                  <p className="text-xs text-gray-400 mb-1">Date</p>
+                  <p className="text-sm text-gray-900">
                     {booking.event_date
-                      ? new Date(booking.event_date).toLocaleDateString(
-                          "en-US",
-                          {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          }
-                        )
-                      : "Not specified"}
+                      ? new Date(booking.event_date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "-"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
-                    Number of Guests
-                  </p>
-                  <p className="text-[var(--color-dark)] text-sm">
-                    {booking.pax ? `${booking.pax} pax` : "Not specified"}
+                  <p className="text-xs text-gray-400 mb-1">Guests</p>
+                  <p className="text-sm text-gray-900">
+                    {booking.pax ? `${booking.pax} pax` : "-"}
                   </p>
                 </div>
               </div>
-
               {booking.message && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">
-                    Customer Message
-                  </p>
-                  <p className="text-[var(--color-dark)] leading-relaxed whitespace-pre-wrap text-sm">
+                <div className="mt-4">
+                  <p className="text-xs text-gray-400 mb-1">Message</p>
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
                     {booking.message}
                   </p>
                 </div>
@@ -421,91 +319,81 @@ export default function InquiryDetailPage({
             </div>
 
             {/* Notes */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2
-                className="text-lg font-bold text-[var(--color-dark)] mb-4"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Internal Notes
+            <div>
+              <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">
+                Notes
               </h2>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none transition resize-none text-sm"
-                placeholder="Add notes about this booking (only visible to admin)..."
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 focus:border-gray-300 outline-none transition resize-none placeholder-gray-300"
+                placeholder="Add internal notes..."
               />
               <button
                 onClick={saveNotes}
                 disabled={savingNotes}
-                className="mt-3 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+                className="mt-2 text-xs text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
               >
-                {savingNotes ? "Saving..." : "Save Notes"}
+                {savingNotes ? "Saving..." : "Save notes"}
               </button>
             </div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Payment Tracking */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2
-                className="text-lg font-bold text-[var(--color-dark)] mb-4"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
+          <div className="space-y-8">
+            {/* Payment */}
+            <div>
+              <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">
                 Payment
               </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Total Amount
-                  </label>
-                  <div className="flex gap-2">
+                  <label className="text-xs text-gray-400 block mb-1">Total</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">₱</span>
                     <input
                       type="number"
                       value={totalAmount}
                       onChange={(e) => setTotalAmount(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+                      className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 focus:border-gray-300 outline-none"
                       placeholder="0"
                     />
-                    <span className="text-sm text-gray-500 self-center">PHP</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Deposit Amount
-                  </label>
-                  <div className="flex gap-2">
+                  <label className="text-xs text-gray-400 block mb-1">Deposit</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">₱</span>
                     <input
                       type="number"
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent outline-none"
+                      className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm focus:ring-1 focus:ring-gray-300 focus:border-gray-300 outline-none"
                       placeholder="0"
                     />
-                    <span className="text-sm text-gray-500 self-center">PHP</span>
                   </div>
                 </div>
                 <button
                   onClick={saveAmounts}
                   disabled={savingAmount}
-                  className="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
                 >
-                  {savingAmount ? "Saving..." : "Save Amounts"}
+                  {savingAmount ? "Saving..." : "Save"}
                 </button>
 
-                <div className="pt-4 border-t">
+                <div className="pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Deposit Paid</span>
+                    <span className="text-xs text-gray-500">Deposit paid</span>
                     <button
                       onClick={toggleDepositPaid}
-                      className={`w-12 h-6 rounded-full transition-colors ${
-                        booking.deposit_paid ? "bg-green-500" : "bg-gray-300"
+                      className={`w-10 h-5 rounded-full transition-colors relative ${
+                        booking.deposit_paid ? "bg-green-500" : "bg-gray-200"
                       }`}
                     >
                       <div
-                        className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                          booking.deposit_paid ? "translate-x-6" : "translate-x-0.5"
+                        className={`w-4 h-4 bg-white rounded-full shadow absolute top-0.5 transition-transform ${
+                          booking.deposit_paid ? "translate-x-5" : "translate-x-0.5"
                         }`}
                       />
                     </button>
@@ -514,46 +402,42 @@ export default function InquiryDetailPage({
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h2
-                className="text-lg font-bold text-[var(--color-dark)] mb-4"
-                style={{ fontFamily: "var(--font-playfair)" }}
-              >
-                Quick Actions
+            {/* Actions */}
+            <div>
+              <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-4">
+                Actions
               </h2>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <a
-                  href={`mailto:${booking.email}?subject=Arabella Events Place - Your ${booking.event_type} Inquiry&body=Hi ${booking.name},%0A%0AThank you for your inquiry about your ${booking.event_type}${booking.event_date ? ` on ${booking.event_date}` : ""}.%0A%0A`}
-                  className="block w-full bg-[var(--color-primary)] text-white py-3 rounded-lg text-sm font-semibold text-center hover:bg-[var(--color-primary-dark)] transition-colors"
+                  href={`mailto:${booking.email}?subject=Arabella Events Place - Your Inquiry&body=Hi ${booking.name},`}
+                  className="block w-full text-center py-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   Send Email
                 </a>
                 <a
                   href={`tel:${booking.phone}`}
-                  className="block w-full border-2 border-[var(--color-primary)] text-[var(--color-primary)] py-3 rounded-lg text-sm font-semibold text-center hover:bg-[var(--color-primary)] hover:text-white transition-colors"
+                  className="block w-full text-center py-2.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                 >
-                  Call Customer
+                  Call
                 </a>
                 <a
                   href={`https://wa.me/${booking.phone.replace(/[^0-9]/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full bg-green-600 text-white py-3 rounded-lg text-sm font-semibold text-center hover:bg-green-700 transition-colors"
+                  className="block w-full text-center py-2.5 rounded-lg bg-green-600 text-xs font-medium text-white hover:bg-green-700 transition-colors"
                 >
                   WhatsApp
                 </a>
               </div>
             </div>
 
-            {/* Danger Zone */}
-            <div className="bg-red-50 rounded-2xl p-6">
-              <h2 className="text-sm font-bold text-red-800 mb-2">Danger Zone</h2>
+            {/* Delete */}
+            <div className="pt-4 border-t border-gray-100">
               <button
                 onClick={handleDelete}
-                className="w-full bg-red-100 text-red-700 py-2.5 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors"
+                className="text-xs text-red-400 hover:text-red-600 transition-colors"
               >
-                Delete Inquiry
+                Delete inquiry
               </button>
             </div>
           </div>
