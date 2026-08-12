@@ -14,24 +14,24 @@ const MONTHS = [
 const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const EVENT_COLOR: Record<string, string> = {
-  Wedding: "bg-pink-500",
-  "Birthday Party": "bg-blue-500",
-  "Corporate Event": "bg-slate-500",
-  "Family Gathering": "bg-amber-500",
-  Christening: "bg-violet-500",
-  Debut: "bg-rose-500",
-  Other: "bg-gray-500",
+  Wedding: "bg-gray-600",
+  "Birthday Party": "bg-gray-500",
+  "Corporate Event": "bg-gray-700",
+  "Family Gathering": "bg-gray-500",
+  Christening: "bg-gray-400",
+  Debut: "bg-gray-500",
+  Other: "bg-gray-400",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  new: "bg-blue-100 text-blue-700",
-  contacted: "bg-amber-100 text-amber-700",
-  quoted: "bg-purple-100 text-purple-700",
-  pending_deposit: "bg-orange-100 text-orange-700",
-  deposit_paid: "bg-green-100 text-green-700",
-  confirmed: "bg-emerald-100 text-emerald-700",
-  completed: "bg-gray-100 text-gray-600",
-  cancelled: "bg-red-100 text-red-600",
+  new: "bg-gray-100 text-gray-700",
+  contacted: "bg-gray-200 text-gray-700",
+  quoted: "bg-gray-200 text-gray-800",
+  pending_deposit: "bg-gray-200 text-gray-800",
+  deposit_paid: "bg-gray-200 text-gray-800",
+  confirmed: "bg-gray-300 text-gray-800",
+  completed: "bg-gray-100 text-gray-500",
+  cancelled: "bg-gray-100 text-gray-400",
 };
 
 function daysUntil(dateStr: string) {
@@ -93,18 +93,19 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-200 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-300 flex items-center justify-center">
         <p className="text-gray-400 text-xs">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-200">
+    <div className="min-h-screen bg-gray-300">
       <AdminHeader
         title="Arabella Admin"
         rightItems={[
           { label: "Site", href: "/" },
+          { label: "Gallery", href: "/admin/gallery" },
           { label: "Inquiries", href: "/admin/inquiries" },
           { label: "Logout", onClick: logout },
         ]}
@@ -125,11 +126,11 @@ export default function AdminDashboard() {
           </div>
           <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider">New Leads</p>
-            <p className="text-2xl font-bold text-blue-600 mt-0.5">{statusCounts["new"] || 0}</p>
+            <p className="text-2xl font-bold text-gray-700 mt-0.5">{statusCounts["new"] || 0}</p>
           </div>
           <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider">Pending Deposits</p>
-            <p className="text-2xl font-bold text-amber-600 mt-0.5">{statusCounts["pending_deposit"] || 0}</p>
+            <p className="text-2xl font-bold text-gray-700 mt-0.5">{statusCounts["pending_deposit"] || 0}</p>
           </div>
           <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider">Revenue</p>
@@ -181,7 +182,7 @@ export default function AdminDashboard() {
                           {b.total_amount > 0 && (
                             <p className="text-xs font-semibold text-gray-700">₱{b.total_amount.toLocaleString()}</p>
                           )}
-                          <p className={`text-[10px] font-medium ${diff <= 2 ? "text-red-500" : diff <= 5 ? "text-amber-500" : "text-gray-400"}`}>
+                          <p className={`text-[10px] font-medium ${diff <= 2 ? "text-gray-900" : diff <= 5 ? "text-gray-600" : "text-gray-400"}`}>
                             {diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : `${diff} days`}
                           </p>
                         </div>
@@ -308,11 +309,11 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">Deposits in</span>
-                  <span className="text-xs font-semibold text-green-600">₱{collectedDeposits.toLocaleString()}</span>
+                  <span className="text-xs font-semibold text-gray-800">₱{collectedDeposits.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-500">Pending</span>
-                  <span className="text-xs font-semibold text-amber-600">
+                  <span className="text-xs font-semibold text-gray-600">
                     ₱{bookings.filter((b) => b.status === "pending_deposit").reduce((s, b) => s + (b.deposit_amount || 0), 0).toLocaleString()}
                   </span>
                 </div>

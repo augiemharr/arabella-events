@@ -1,28 +1,24 @@
 import Image from "next/image";
 import ScrollReveal from "@/components/ScrollReveal";
+import { usePublicGallery } from "@/hooks/useGallery";
 
-const galleryImages = [
-  { src: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop", alt: "Wedding reception setup", category: "Events" },
-  { src: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=600&fit=crop", alt: "Banquet hall", category: "Venue" },
-  { src: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop", alt: "Elegant table setting", category: "Setup" },
-  { src: "https://images.unsplash.com/photo-1555244162-803834f70033?w=800&h=600&fit=crop", alt: "Buffet spread", category: "Food" },
-  { src: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&h=600&fit=crop", alt: "Signature dish", category: "Food" },
-  { src: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=800&h=600&fit=crop", alt: "Birthday celebration", category: "Events" },
-  { src: "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=800&h=600&fit=crop", alt: "Party decorations", category: "Events" },
-  { src: "https://images.unsplash.com/photo-1544025162-d76694265947?w=800&h=600&fit=crop", alt: "Grilled pork", category: "Food" },
-  { src: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800&h=600&fit=crop", alt: "Outdoor venue area", category: "Venue" },
-  { src: "https://images.unsplash.com/photo-1470338745628-171cf53de3a8?w=800&h=600&fit=crop", alt: "Wedding flowers", category: "Setup" },
-  { src: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=800&h=600&fit=crop", alt: "Filipino dish", category: "Food" },
-  { src: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=600&fit=crop", alt: "Event lighting", category: "Setup" },
+const FALLBACK_IMAGES = [
+  { src: "/photos/484994606_1089778563166815_5014659655509340016_n.jpg", alt: "Venue setup", category: "Venue" },
+  { src: "/photos/485373853_1089778793166792_79811654493615512_n.jpg", alt: "Event decorations", category: "Setup" },
+  { src: "/photos/485658410_1089779039833434_8955685759006598901_n.jpg", alt: "Reception area", category: "Venue" },
+  { src: "/photos/485790745_1089778786500126_4091750587922350308_n.jpg", alt: "Event styling", category: "Setup" },
 ];
 
 export default function GalleryPage() {
+  const { photos, loading } = usePublicGallery();
+  const galleryImages = photos.length > 0 ? photos : FALLBACK_IMAGES;
+
   return (
     <>
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1920&h=800&fit=crop"
+          src={galleryImages[0]?.src || FALLBACK_IMAGES[2].src}
           alt="Arabella gallery"
           fill
           className="object-cover"
@@ -45,6 +41,11 @@ export default function GalleryPage() {
       {/* Gallery Grid */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {loading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-300 text-sm">Loading gallery...</p>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {galleryImages.map((img, i) => (
               <ScrollReveal
@@ -75,6 +76,7 @@ export default function GalleryPage() {
               </ScrollReveal>
             ))}
           </div>
+          )}
         </div>
       </section>
 

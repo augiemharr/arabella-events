@@ -42,3 +42,36 @@ CREATE POLICY "Allow authenticated updates" ON bookings
 CREATE POLICY "Allow authenticated deletes" ON bookings
   FOR DELETE
   USING (auth.role() = 'authenticated');
+
+-- Create gallery table
+CREATE TABLE IF NOT EXISTS gallery (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  src TEXT NOT NULL,
+  alt TEXT NOT NULL DEFAULT '',
+  category TEXT NOT NULL DEFAULT 'General',
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE gallery ENABLE ROW LEVEL SECURITY;
+
+-- Allow anonymous reads (for public gallery page)
+CREATE POLICY "Allow anonymous reads" ON gallery
+  FOR SELECT
+  USING (true);
+
+-- Allow authenticated inserts (for admin uploads)
+CREATE POLICY "Allow authenticated inserts" ON gallery
+  FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- Allow authenticated updates (for admin reorder/edit)
+CREATE POLICY "Allow authenticated updates" ON gallery
+  FOR UPDATE
+  USING (auth.role() = 'authenticated');
+
+-- Allow authenticated deletes (for admin)
+CREATE POLICY "Allow authenticated deletes" ON gallery
+  FOR DELETE
+  USING (auth.role() = 'authenticated');
