@@ -4,7 +4,9 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useAdminAuth } from "@/hooks/useAdmin";
 import { RESPONSE_TEMPLATES } from "@/lib/templates";
+import AdminHeader from "@/components/AdminHeader";
 
 interface Booking {
   id: string;
@@ -27,8 +29,11 @@ interface Booking {
 
 export default function InquiryDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
+  const { loading: authLoading, logout } = useAdminAuth();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [notes, setNotes] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
@@ -39,39 +44,44 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
   const [templateSubject, setTemplateSubject] = useState("");
   const [templateBody, setTemplateBody] = useState("");
   const [copied, setCopied] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) { router.push("/admin/login"); return; }
-      const { data: bookingData } = await supabase.from("bookings").select("*").eq("id", id).single();
-      if (bookingData) {
-        setBooking(bookingData);
-        setNotes(bookingData.notes || "");
-        setTotalAmount(bookingData.total_amount?.toString() || "");
-        setDepositAmount(bookingData.deposit_amount?.toString() || "");
+    if (authLoading) return;
+    const fetchBooking = async () => {
+      const { data, error: fetchError } = await supabase.from("bookings").select("*").eq("id", id).single();
+      if (fetchError) {
+        setError(fetchError.message);
+      } else if (data) {
+        setBooking(data);
+        setNotes(data.notes || "");
+        setTotalAmount(data.total_amount?.toString() || "");
+        setDepositAmount(data.deposit_amount?.toString() || "");
       }
       setLoading(false);
     };
-    checkAuth();
-  }, [id, router]);
+    fetchBooking();
+  }, [id, authLoading]);
 
   const updateStatus = async (newStatus: string) => {
     if (!booking) return;
     setUpdating(true);
+    setError(null);
     const updateData: Record<string, unknown> = { status: newStatus };
     if (newStatus === "contacted" || newStatus === "quoted") updateData.last_contacted_at = new Date().toISOString();
-    const { error } = await supabase.from("bookings").update(updateData).eq("id", booking.id);
-    if (!error) setBooking({ ...booking, ...updateData } as Booking);
+    const { error: updateError } = await supabase.from("bookings").update(updateData).eq("id", booking.id);
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setBooking({ ...booking, ...updateData } as Booking);
+    }
     setUpdating(false);
   };
 
   const saveNotes = async () => {
     if (!booking) return;
     setSavingNotes(true);
-    const { error } = await supabase.from("bookings").update({ notes }).eq("id", booking.id);
-    if (!error) setBooking({ ...booking, notes } as Booking);
+    const { error: updateError } = await supabase.from("bookings").update({ notes }).eq("id", booking.id);
+    if (!updateError) setBooking({ ...booking, notes } as Booking);
     setSavingNotes(false);
   };
 
@@ -80,25 +90,42 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
     setSavingAmount(true);
     const total = totalAmount ? parseFloat(totalAmount) : 0;
     const deposit = depositAmount ? parseFloat(depositAmount) : 0;
-    const { error } = await supabase.from("bookings").update({ total_amount: total, deposit_amount: deposit }).eq("id", booking.id);
-    if (!error) setBooking({ ...booking, total_amount: total, deposit_amount: deposit } as Booking);
+    const { error: updateError } = await supabase.from("bookings").update({ total_amount: total, deposit_amount: deposit }).eq("id", booking.id);
+    if (!updateError) setBooking({ ...booking, total_amount: total, deposit_amount: deposit } as Booking);
     setSavingAmount(false);
   };
 
   const toggleDepositPaid = async () => {
     if (!booking) return;
     const newValue = !booking.deposit_paid;
-    const { error } = await supabase.from("bookings").update({ deposit_paid: newValue, status: newValue ? "deposit_paid" : "pending_deposit" }).eq("id", booking.id);
-    if (!error) setBooking({ ...booking, deposit_paid: newValue, status: newValue ? "deposit_paid" : "pending_deposit" } as Booking);
+    const updates: Record<string, unknown> = { deposit_paid: newValue };
+    if (newValue && booking.status === "pending_deposit") {
+      updates.status = "deposit_paid";
+    } else if (!newValue && booking.status === "deposit_paid") {
+      updates.status = "pending_deposit";
+    }
+    const { error: updateError } = await supabase.from("bookings").update(updates).eq("id", booking.id);
+    if (!updateError) setBooking({ ...booking, ...updates } as Booking);
+  };
+
+  const toggleFinalPaid = async () => {
+    if (!booking) return;
+    const newValue = !booking.final_paid;
+    const updates: Record<string, unknown> = { final_paid: newValue };
+    if (newValue && booking.status !== "completed" && booking.status !== "cancelled") {
+      updates.status = "completed";
+    } else if (!newValue && booking.status === "completed") {
+      updates.status = "confirmed";
+    }
+    const { error: updateError } = await supabase.from("bookings").update(updates).eq("id", booking.id);
+    if (!updateError) setBooking({ ...booking, ...updates } as Booking);
   };
 
   const handleDelete = async () => {
     if (!booking || !confirm("Delete this inquiry?")) return;
-    const { error } = await supabase.from("bookings").delete().eq("id", booking.id);
-    if (!error) router.push("/admin/inquiries");
+    const { error: deleteError } = await supabase.from("bookings").delete().eq("id", booking.id);
+    if (!deleteError) router.push("/admin/inquiries");
   };
-
-  const handleLogout = async () => { await supabase.auth.signOut(); router.push("/admin/login"); };
 
   const fillTemplate = (index: number) => {
     if (!booking) return;
@@ -122,28 +149,43 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
     updateStatus("contacted");
   };
 
-  if (loading || !booking) return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Loading...</p></div>;
+  if (authLoading || loading) {
+    return <div className="min-h-screen bg-white flex items-center justify-center"><p className="text-gray-400 text-sm">Loading...</p></div>;
+  }
+
+  if (error && !booking) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500 text-sm">{error}</p>
+        <Link href="/admin/inquiries" className="text-sm text-gray-900 underline">Back to inquiries</Link>
+      </div>
+    );
+  }
+
+  if (!booking) return null;
 
   const statusFlow = ["new", "contacted", "quoted", "pending_deposit", "deposit_paid", "confirmed", "completed"];
   const currentIdx = statusFlow.indexOf(booking.status);
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <Link href="/admin/inquiries" className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider">Back</Link>
-            <h1 className="text-base font-semibold text-gray-900" style={{ fontFamily: "var(--font-playfair)" }}>{booking.name}</h1>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider">Site</Link>
-            <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-gray-600 transition-colors uppercase tracking-wider">Logout</button>
-          </div>
-        </div>
-      </header>
+      <AdminHeader
+        title={booking.name}
+        backHref="/admin/inquiries"
+        rightItems={[
+          { label: "Site", href: "/" },
+          { label: "Logout", onClick: logout },
+        ]}
+      />
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-8">
+      {error && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-4">
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>
+        </div>
+      )}
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-2 flex-wrap">
             {statusFlow.map((s, i) => (
               <button key={s} onClick={() => updateStatus(s)} disabled={updating}
@@ -158,8 +200,8 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-8">
-          <div className="col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+          <div className="lg:col-span-2 space-y-6">
             <div>
               <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Contact</h2>
               <div className="grid grid-cols-2 gap-4">
@@ -263,11 +305,18 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
                 <button onClick={saveAmounts} disabled={savingAmount} className="text-xs text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50">
                   {savingAmount ? "Saving..." : "Save"}
                 </button>
-                <div className="pt-4 border-t border-gray-100">
+
+                <div className="pt-4 border-t border-gray-100 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">Deposit paid</span>
                     <button onClick={toggleDepositPaid} className={"w-10 h-5 rounded-full transition-colors relative " + (booking.deposit_paid ? "bg-green-500" : "bg-gray-200")}>
                       <div className={"w-4 h-4 bg-white rounded-full shadow absolute top-0.5 transition-transform " + (booking.deposit_paid ? "translate-x-5" : "translate-x-0.5")} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Final payment received</span>
+                    <button onClick={toggleFinalPaid} className={"w-10 h-5 rounded-full transition-colors relative " + (booking.final_paid ? "bg-green-500" : "bg-gray-200")}>
+                      <div className={"w-4 h-4 bg-white rounded-full shadow absolute top-0.5 transition-transform " + (booking.final_paid ? "translate-x-5" : "translate-x-0.5")} />
                     </button>
                   </div>
                 </div>

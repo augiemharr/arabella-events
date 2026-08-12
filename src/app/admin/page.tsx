@@ -1,435 +1,445 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-
-interface Booking {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  event_type: string;
-  event_date: string | null;
-  pax: number | null;
-  status: string;
-  total_amount: number;
-  created_at: string;
-}
+import { useAdminAuth, useBookings } from "@/hooks/useAdmin";
+import AdminHeader from "@/components/AdminHeader";
+import NewBookingModal from "@/components/NewBookingModal";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ];
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
-const EVENT_COLORS: Record<string, { dot: string; text: string }> = {
-  Wedding: { dot: "#ec4899", text: "#be185d" },
-  "Birthday Party": { dot: "#3b82f6", text: "#1d4ed8" },
-  "Corporate Event": { dot: "#64748b", text: "#334155" },
-  "Family Gathering": { dot: "#f59e0b", text: "#b45309" },
-  Christening: { dot: "#8b5cf6", text: "#6d28d9" },
-  Debut: { dot: "#f43f5e", text: "#e11d48" },
-  Other: { dot: "#6b7280", text: "#374151" },
+const EVENT_COLOR: Record<string, string> = {
+  Wedding: "bg-pink-500",
+  "Birthday Party": "bg-blue-500",
+  "Corporate Event": "bg-slate-500",
+  "Family Gathering": "bg-amber-500",
+  Christening: "bg-violet-500",
+  Debut: "bg-rose-500",
+  Other: "bg-gray-500",
 };
 
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  new: { bg: "#dbeafe", color: "#1d4ed8" },
-  contacted: { bg: "#fef3c7", color: "#b45309" },
-  quoted: { bg: "#ede9fe", color: "#6d28d9" },
-  pending_deposit: { bg: "#ffedd5", color: "#c2410c" },
-  deposit_paid: { bg: "#dcfce7", color: "#15803d" },
-  confirmed: { bg: "#dcfce7", color: "#15803d" },
-  completed: { bg: "#f3f4f6", color: "#4b5563" },
-  cancelled: { bg: "#fee2e2", color: "#dc2626" },
+const STATUS_BADGE: Record<string, string> = {
+  new: "bg-blue-100 text-blue-700",
+  contacted: "bg-amber-100 text-amber-700",
+  quoted: "bg-purple-100 text-purple-700",
+  pending_deposit: "bg-orange-100 text-orange-700",
+  deposit_paid: "bg-green-100 text-green-700",
+  confirmed: "bg-emerald-100 text-emerald-700",
+  completed: "bg-gray-100 text-gray-600",
+  cancelled: "bg-red-100 text-red-600",
 };
+
+function daysUntil(dateStr: string) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - now.getTime()) / 86400000);
+}
+
+function relativeTime(dateStr: string) {
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return `${days}d ago`;
+}
 
 export default function AdminDashboard() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const router = useRouter();
+  const { loading: authLoading, logout } = useAdminAuth();
+  const { bookings, loading: bookingsLoading, error, addBooking } = useBookings();
+  const [showNewBooking, setShowNewBooking] = useState(false);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) {
-        router.push("/admin/login");
-        return;
-      }
-      const { data: bookingsData } = await supabase
-        .from("bookings")
-        .select("*")
-        .order("created_at", { ascending: false });
-      setBookings(bookingsData || []);
-      setLoading(false);
-    };
-    checkAuth();
-  }, [router]);
+  const loading = authLoading || bookingsLoading;
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/admin/login");
-  };
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
 
-  const getBookingsForDate = (day: number) => {
-    const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return bookings.filter((b) => b.event_date === dateStr);
-  };
+  const activeBookings = bookings.filter((b) => b.status !== "cancelled" && b.status !== "completed");
+  const totalRevenue = bookings.filter((b) => b.status !== "cancelled").reduce((s, b) => s + (b.total_amount || 0), 0);
+  const collectedDeposits = bookings.filter((b) => b.deposit_paid).reduce((s, b) => s + (b.deposit_amount || 0), 0);
 
-  const navigateMonth = (direction: number) => {
-    if (direction === -1) {
-      if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); }
-      else setCurrentMonth(currentMonth - 1);
-    } else {
-      if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear(currentYear + 1); }
-      else setCurrentMonth(currentMonth + 1);
-    }
-    setSelectedDate(null);
-  };
+  const thisWeekEnd = new Date(now);
+  thisWeekEnd.setDate(thisWeekEnd.getDate() + 7);
+  const thisWeekStr = thisWeekEnd.toISOString().slice(0, 10);
 
-  const stats = {
-    total: bookings.length,
-    new: bookings.filter((b) => b.status === "new").length,
-    pendingDeposit: bookings.filter((b) => b.status === "pending_deposit").length,
-    confirmed: bookings.filter((b) => b.status === "confirmed").length,
-    totalRevenue: bookings.reduce((sum, b) => sum + (b.total_amount || 0), 0),
-  };
+  const upcomingThisWeek = bookings
+    .filter((b) => b.event_date && b.event_date >= today && b.event_date <= thisWeekStr && b.status !== "cancelled")
+    .sort((a, b) => a.event_date!.localeCompare(b.event_date!));
 
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const calendarDays: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) calendarDays.push(null);
-  for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
-
-  const selectedBookings = selectedDate ? getBookingsForDate(selectedDate) : [];
-
-  const upcomingBookings = bookings
-    .filter((b) => b.event_date && new Date(b.event_date) >= new Date() && b.status !== "cancelled")
-    .sort((a, b) => new Date(a.event_date!).getTime() - new Date(b.event_date!).getTime())
+  const upcomingAll = bookings
+    .filter((b) => b.event_date && b.event_date > thisWeekStr && b.status !== "cancelled")
+    .sort((a, b) => a.event_date!.localeCompare(b.event_date!))
     .slice(0, 5);
 
-  const recentBookings = bookings.slice(0, 5);
+  const actionRequired = bookings
+    .filter((b) => b.status === "new" || b.status === "pending_deposit")
+    .sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""))
+    .slice(0, 8);
+
+  const recentInquiries = bookings
+    .filter((b) => b.status === "new")
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, 5);
+
+  const statusCounts = bookings.reduce<Record<string, number>>((acc, b) => {
+    acc[b.status] = (acc[b.status] || 0) + 1;
+    return acc;
+  }, {});
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "#6b7280", fontSize: "14px" }}>Loading...</p>
+      <div className="min-h-screen bg-gray-200 flex items-center justify-center">
+        <p className="text-gray-400 text-xs">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f3f4f6" }}>
-      <header style={{ background: "#ffffff", borderBottom: "1px solid #e5e7eb" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "16px 32px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h1 style={{ fontSize: "18px", fontWeight: 600, color: "#111827", fontFamily: "var(--font-playfair)" }}>
-            Arabella Admin
-          </h1>
-          <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
-            <Link href="/" style={{ fontSize: "12px", color: "#9ca3af", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.1em" }}>Site</Link>
-            <button onClick={handleLogout} style={{ fontSize: "12px", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", background: "none", border: "none", cursor: "pointer" }}>Logout</button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-200">
+      <AdminHeader
+        title="Arabella Admin"
+        rightItems={[
+          { label: "Site", href: "/" },
+          { label: "Inquiries", href: "/admin/inquiries" },
+          { label: "Logout", onClick: logout },
+        ]}
+      />
 
-      <main style={{ maxWidth: "1280px", margin: "0 auto", padding: "40px 32px" }}>
+      {error && (
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-3">
+          <div className="p-2 rounded bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>
+        </div>
+      )}
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "24px", marginBottom: "40px" }}>
-          {[
-            { label: "Inquiries", value: stats.total, valueColor: "#111827", accent: "#111827" },
-            { label: "New", value: stats.new, valueColor: "#2563eb", accent: "#3b82f6" },
-            { label: "Pending", value: stats.pendingDeposit, valueColor: "#d97706", accent: "#f59e0b" },
-            { label: "Confirmed", value: stats.confirmed, valueColor: "#16a34a", accent: "#22c55e" },
-            { label: "Revenue", value: `₱${stats.totalRevenue.toLocaleString()}`, valueColor: "#111827", accent: "#111827" },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              style={{
-                background: "#ffffff",
-                border: "1px solid #e5e7eb",
-                borderLeft: `3px solid ${stat.accent}`,
-                borderRadius: "8px",
-                padding: "20px",
-              }}
-            >
-              <p style={{ fontSize: "24px", fontWeight: 700, color: stat.valueColor, margin: 0 }}>{stat.value}</p>
-              <p style={{ fontSize: "10px", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: "4px", margin: "4px 0 0 0" }}>{stat.label}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">Active Events</p>
+            <p className="text-2xl font-bold text-gray-900 mt-0.5">{activeBookings.length}</p>
+          </div>
+          <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">New Leads</p>
+            <p className="text-2xl font-bold text-blue-600 mt-0.5">{statusCounts["new"] || 0}</p>
+          </div>
+          <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">Pending Deposits</p>
+            <p className="text-2xl font-bold text-amber-600 mt-0.5">{statusCounts["pending_deposit"] || 0}</p>
+          </div>
+          <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">Revenue</p>
+            <p className="text-2xl font-bold text-gray-900 mt-0.5">₱{totalRevenue.toLocaleString()}</p>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: "32px" }}>
-          {/* Calendar */}
-          <div style={{ flex: 1 }}>
-            <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
-                <h2 style={{ fontSize: "16px", fontWeight: 600, color: "#111827", fontFamily: "var(--font-playfair)", margin: 0 }}>
-                  {MONTHS[currentMonth]} {currentYear}
-                </h2>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button onClick={() => navigateMonth(-1)} style={{ width: "32px", height: "32px", borderRadius: "6px", border: "1px solid #e5e7eb", background: "#ffffff", color: "#9ca3af", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>&larr;</button>
-                  <button onClick={() => navigateMonth(1)} style={{ width: "32px", height: "32px", borderRadius: "6px", border: "1px solid #e5e7eb", background: "#ffffff", color: "#9ca3af", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>&rarr;</button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Upcoming Events */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* This Week */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold text-gray-900">This Week</h2>
+                <Link href="/admin/inquiries" className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-wider">View all</Link>
+              </div>
+              {upcomingThisWeek.length === 0 ? (
+                <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-6 text-center">
+                  <p className="text-sm text-gray-300">No events this week</p>
+                  <p className="text-[10px] text-gray-300 mt-1">Enjoy the downtime</p>
                 </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid #e5e7eb" }}>
-                {DAYS.map((day) => (
-                  <div key={day} style={{ padding: "10px 0", textAlign: "center", fontSize: "10px", fontWeight: 600, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em" }}>{day}</div>
-                ))}
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)" }}>
-                {calendarDays.map((day, index) => {
-                  const dayBookings = day ? getBookingsForDate(day) : [];
-                  const isToday = day === new Date().getDate() && currentMonth === new Date().getMonth() && currentYear === new Date().getFullYear();
-                  const isSelected = day === selectedDate;
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => day && setSelectedDate(day)}
-                      style={{
-                        position: "relative",
-                        height: "80px",
-                        padding: "8px",
-                        borderBottom: "1px solid #e5e7eb",
-                        borderRight: "1px solid #e5e7eb",
-                        cursor: day ? "pointer" : "default",
-                        background: isSelected ? "#f3f4f6" : "transparent",
-                      }}
-                    >
-                      {day && (
-                        <>
-                          <span style={{
-                            fontSize: "12px",
-                            fontWeight: 500,
-                            color: isToday ? "#ffffff" : "#6b7280",
-                            background: isToday ? "#111827" : "transparent",
-                            width: isToday ? "24px" : "auto",
-                            height: isToday ? "24px" : "auto",
-                            borderRadius: isToday ? "50%" : "0",
-                            display: isToday ? "inline-flex" : "inline",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}>
-                            {day}
-                          </span>
-                          {dayBookings.length > 0 && (
-                            <div style={{ position: "absolute", bottom: "8px", left: "8px", display: "flex", gap: "4px" }}>
-                              {dayBookings.slice(0, 4).map((b) => (
-                                <span key={b.id} style={{ width: "8px", height: "8px", borderRadius: "50%", background: EVENT_COLORS[b.event_type]?.dot || "#6b7280" }} />
-                              ))}
-                              {dayBookings.length > 4 && (
-                                <span style={{ fontSize: "8px", color: "#9ca3af", fontWeight: 500 }}>+{dayBookings.length - 4}</span>
-                              )}
-                            </div>
+              ) : (
+                <div className="space-y-2">
+                  {upcomingThisWeek.map((b) => {
+                    const diff = daysUntil(b.event_date!);
+                    return (
+                      <Link
+                        key={b.id}
+                        href={`/admin/inquiries/${b.id}`}
+                        className="flex items-center gap-4 bg-white border border-gray-300 rounded-lg shadow-sm p-3 hover:border-gray-300 transition"
+                      >
+                        <div className="w-12 text-center flex-shrink-0">
+                          <p className="text-[9px] text-gray-400 uppercase">
+                            {new Date(b.event_date!).toLocaleDateString("en-US", { weekday: "short" })}
+                          </p>
+                          <p className="text-lg font-bold text-gray-900 leading-tight">
+                            {new Date(b.event_date!).getDate()}
+                          </p>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{b.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`w-2 h-2 rounded-full ${EVENT_COLOR[b.event_type] || "bg-gray-400"}`} />
+                            <span className="text-[11px] text-gray-400">{b.event_type}</span>
+                            {b.pax && <span className="text-[11px] text-gray-400">· {b.pax} pax</span>}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          {b.total_amount > 0 && (
+                            <p className="text-xs font-semibold text-gray-700">₱{b.total_amount.toLocaleString()}</p>
                           )}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", marginTop: "16px", paddingLeft: "4px" }}>
-              {Object.entries(EVENT_COLORS).filter(([key]) => key !== "Other").map(([type, colors]) => (
-                <div key={type} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "10px", color: "#6b7280" }}>
-                  <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: colors.dot }} />
-                  {type}
+                          <p className={`text-[10px] font-medium ${diff <= 2 ? "text-red-500" : diff <= 5 ? "text-amber-500" : "text-gray-400"}`}>
+                            {diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : `${diff} days`}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              )}
+            </section>
 
-            {/* Selected Date Details */}
-            {selectedDate && (
-              <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "24px", marginTop: "24px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#111827", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <span style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff" }}>{selectedDate}</span>
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#111827", margin: 0 }}>
-                        {MONTHS[currentMonth]} {selectedDate}, {currentYear}
-                      </h3>
-                      <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px", margin: "2px 0 0 0" }}>
-                        {new Date(currentYear, currentMonth, selectedDate).toLocaleDateString("en-US", { weekday: "long" })}
-                      </p>
-                    </div>
-                  </div>
-                  {selectedBookings.length === 0 ? (
-                    <span style={{ fontSize: "10px", fontWeight: 600, padding: "4px 12px", borderRadius: "9999px", background: "#dcfce7", color: "#15803d" }}>Available</span>
-                  ) : (
-                    <span style={{ fontSize: "10px", fontWeight: 600, padding: "4px 12px", borderRadius: "9999px", background: "#fef3c7", color: "#b45309" }}>
-                      {selectedBookings.length} Booking{selectedBookings.length > 1 ? "s" : ""}
-                    </span>
-                  )}
-                </div>
-
-                {selectedBookings.length === 0 ? (
-                  <div style={{ padding: "32px 0", textAlign: "center", border: "1px dashed #d1d5db", borderRadius: "8px" }}>
-                    <p style={{ fontSize: "14px", color: "#9ca3af", marginBottom: "12px", margin: "0 0 12px 0" }}>No events on this date</p>
-                    <Link href="/contact" style={{ fontSize: "12px", color: "#111827", fontWeight: 500, textDecoration: "underline" }}>
-                      + Create booking
+            {/* Upcoming After This Week */}
+            {upcomingAll.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold text-gray-900 mb-3">Coming Up</h2>
+                <div className="bg-white border border-gray-300 rounded-lg shadow-sm divide-y divide-gray-100">
+                  {upcomingAll.map((b) => (
+                    <Link
+                      key={b.id}
+                      href={`/admin/inquiries/${b.id}`}
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 transition"
+                    >
+                      <div className="w-10 text-center flex-shrink-0">
+                        <p className="text-[8px] text-gray-400 uppercase">
+                          {new Date(b.event_date!).toLocaleDateString("en-US", { month: "short" })}
+                        </p>
+                        <p className="text-sm font-bold text-gray-900 leading-tight">
+                          {new Date(b.event_date!).getDate()}
+                        </p>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">{b.name}</p>
+                        <span className="text-[10px] text-gray-400">{b.event_type}</span>
+                      </div>
+                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${STATUS_BADGE[b.status] || "bg-gray-100 text-gray-600"}`}>
+                        {b.status.replace("_", " ")}
+                      </span>
                     </Link>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    {selectedBookings.map((booking) => {
-                      const colors = EVENT_COLORS[booking.event_type] || EVENT_COLORS.Other;
-                      const statusInfo = STATUS_STYLE[booking.status] || STATUS_STYLE.new;
-                      return (
-                        <Link
-                          key={booking.id}
-                          href={`/admin/inquiries/${booking.id}`}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "16px",
-                            borderRadius: "8px",
-                            border: "1px solid #e5e7eb",
-                            textDecoration: "none",
-                          }}
-                        >
-                          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            <div style={{ width: "44px", height: "44px", borderRadius: "8px", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              <span style={{ fontSize: "14px", fontWeight: 700, color: colors.text }}>{booking.event_type.charAt(0)}</span>
-                            </div>
-                            <div>
-                              <p style={{ fontSize: "14px", fontWeight: 500, color: "#111827", margin: 0 }}>{booking.name}</p>
-                              <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px", margin: "2px 0 0 0" }}>
-                                {booking.event_type} · {booking.pax || "-"} pax
-                              </p>
-                            </div>
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            {booking.total_amount > 0 && (
-                              <p style={{ fontSize: "14px", fontWeight: 600, color: "#374151", margin: 0 }}>₱{booking.total_amount.toLocaleString()}</p>
-                            )}
-                            <span style={{ fontSize: "10px", fontWeight: 600, padding: "4px 10px", borderRadius: "9999px", background: statusInfo.bg, color: statusInfo.color }}>
-                              {booking.status.replace("_", " ")}
-                            </span>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              </section>
             )}
+
+            {/* Calendar */}
+            <Calendar bookings={bookings} />
           </div>
 
-          {/* Sidebar */}
-          <div style={{ width: "288px", display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Upcoming */}
-            <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <h2 style={{ fontSize: "11px", fontWeight: 600, color: "#111827", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Upcoming</h2>
-                <Link href="/admin/inquiries" style={{ fontSize: "10px", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none" }}>View all</Link>
-              </div>
-              {upcomingBookings.length === 0 ? (
-                <p style={{ fontSize: "12px", color: "#d1d5db", padding: "16px 0", textAlign: "center", margin: 0 }}>No upcoming events</p>
-              ) : (
-                upcomingBookings.map((booking, index) => {
-                  const colors = EVENT_COLORS[booking.event_type] || EVENT_COLORS.Other;
-                  const eventDate = new Date(booking.event_date!);
-                  return (
-                    <Link
-                      key={booking.id}
-                      href={`/admin/inquiries/${booking.id}`}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "16px",
-                        padding: "14px 0",
-                        borderBottom: index < upcomingBookings.length - 1 ? "1px solid #f3f4f6" : "none",
-                        textDecoration: "none",
-                      }}
-                    >
-                      <div style={{ width: "40px", textAlign: "center", flexShrink: 0 }}>
-                        <p style={{ fontSize: "9px", color: "#9ca3af", textTransform: "uppercase", fontWeight: 500, margin: 0 }}>
-                          {eventDate.toLocaleDateString("en-US", { month: "short" })}
-                        </p>
-                        <p style={{ fontSize: "18px", fontWeight: 700, color: "#111827", lineHeight: 1.2, margin: "2px 0 0 0" }}>
-                          {eventDate.getDate()}
-                        </p>
-                      </div>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <p style={{ fontSize: "14px", fontWeight: 500, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{booking.name}</p>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px" }}>
-                          <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: colors.dot, flexShrink: 0 }} />
-                          <p style={{ fontSize: "12px", color: "#9ca3af", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{booking.event_type}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Recent */}
-            <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "20px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <h2 style={{ fontSize: "11px", fontWeight: 600, color: "#111827", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Recent Inquiries</h2>
-                <Link href="/admin/inquiries" style={{ fontSize: "10px", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em", textDecoration: "none" }}>View all</Link>
-              </div>
-              {recentBookings.length === 0 ? (
-                <p style={{ fontSize: "12px", color: "#d1d5db", padding: "16px 0", textAlign: "center", margin: 0 }}>No inquiries yet</p>
-              ) : (
-                recentBookings.map((booking, index) => {
-                  const colors = EVENT_COLORS[booking.event_type] || EVENT_COLORS.Other;
-                  return (
-                    <Link
-                      key={booking.id}
-                      href={`/admin/inquiries/${booking.id}`}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        padding: "14px 0",
-                        borderBottom: index < recentBookings.length - 1 ? "1px solid #f3f4f6" : "none",
-                        textDecoration: "none",
-                      }}
-                    >
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <p style={{ fontSize: "14px", fontWeight: 500, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{booking.name}</p>
-                        <p style={{ fontSize: "12px", color: "#9ca3af", marginTop: "2px", margin: "2px 0 0 0" }}>{booking.event_type}</p>
-                      </div>
-                      <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: colors.dot, flexShrink: 0 }} />
-                    </Link>
-                  );
-                })
-              )}
-            </div>
-
+          {/* Right: Actions + Financials */}
+          <div className="space-y-6">
             {/* Quick Actions */}
-            <div style={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: "8px", padding: "20px" }}>
-              <h2 style={{ fontSize: "11px", fontWeight: 600, color: "#111827", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "16px", margin: "0 0 16px 0" }}>Quick Actions</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Link
-                  href="/admin/inquiries"
-                  style={{ display: "block", width: "100%", padding: "10px 16px", background: "#111827", color: "#ffffff", fontSize: "12px", fontWeight: 500, borderRadius: "8px", textAlign: "center", textDecoration: "none" }}
-                >
-                  View All Inquiries
-                </Link>
-                <Link
-                  href="/contact"
-                  style={{ display: "block", width: "100%", padding: "10px 16px", background: "#ffffff", color: "#374151", fontSize: "12px", fontWeight: 500, borderRadius: "8px", textAlign: "center", textDecoration: "none", border: "1px solid #e5e7eb" }}
-                >
-                  Create New Booking
-                </Link>
-              </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowNewBooking(true)}
+                className="flex-1 py-2.5 px-3 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition"
+              >
+                + New Booking
+              </button>
+              <Link
+                href="/admin/inquiries"
+                className="flex-1 py-2.5 px-3 border border-gray-300 text-gray-700 text-xs font-medium rounded-lg text-center hover:bg-gray-50 transition"
+              >
+                All Inquiries
+              </Link>
             </div>
+
+            {/* Action Required */}
+            <section>
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Action Required</h2>
+              {actionRequired.length === 0 ? (
+                <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-6 text-center">
+                  <p className="text-sm text-gray-300">All caught up</p>
+                </div>
+              ) : (
+                <div className="bg-white border border-gray-300 rounded-lg shadow-sm divide-y divide-gray-100">
+                  {actionRequired.map((b) => (
+                    <Link
+                      key={b.id}
+                      href={`/admin/inquiries/${b.id}`}
+                      className="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">{b.name}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {b.status === "new" ? "New inquiry" : "Deposit pending"}
+                          {b.last_contacted_at && ` · ${relativeTime(b.last_contacted_at)}`}
+                        </p>
+                      </div>
+                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded flex-shrink-0 ${STATUS_BADGE[b.status] || "bg-gray-100 text-gray-600"}`}>
+                        {b.status.replace("_", " ")}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Recent Inquiries */}
+            {recentInquiries.length > 0 && (
+              <section>
+                <h2 className="text-sm font-semibold text-gray-900 mb-3">New Inquiries</h2>
+                <div className="bg-white border border-gray-300 rounded-lg shadow-sm divide-y divide-gray-100">
+                  {recentInquiries.map((b) => (
+                    <Link
+                      key={b.id}
+                      href={`/admin/inquiries/${b.id}`}
+                      className="flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-900 truncate">{b.name}</p>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{b.event_type} · {relativeTime(b.created_at)}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Revenue Snapshot */}
+            <section>
+              <h2 className="text-sm font-semibold text-gray-900 mb-3">Revenue</h2>
+              <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Quoted</span>
+                  <span className="text-xs font-semibold text-gray-900">₱{totalRevenue.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Deposits in</span>
+                  <span className="text-xs font-semibold text-green-600">₱{collectedDeposits.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Pending</span>
+                  <span className="text-xs font-semibold text-amber-600">
+                    ₱{bookings.filter((b) => b.status === "pending_deposit").reduce((s, b) => s + (b.deposit_amount || 0), 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
+                  <span className="text-xs font-medium text-gray-700">Collected</span>
+                  <span className="text-sm font-bold text-gray-900">
+                    ₱{bookings.filter((b) => b.status === "confirmed" || b.status === "completed").reduce((s, b) => s + (b.total_amount || 0), 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       </main>
+
+      {showNewBooking && (
+        <NewBookingModal
+          onClose={() => setShowNewBooking(false)}
+          onCreated={(booking) => addBooking(booking)}
+        />
+      )}
     </div>
+  );
+}
+
+function Calendar({ bookings }: { bookings: Array<{ id: string; event_date: string | null; name: string; event_type: string }> }) {
+  const [month, setMonth] = useState(new Date().getMonth());
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [selected, setSelected] = useState<number | null>(null);
+
+  const today = new Date();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let i = 1; i <= daysInMonth; i++) cells.push(i);
+
+  const getBookings = (day: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return bookings.filter((b) => b.event_date === dateStr);
+  };
+
+  const prev = () => {
+    if (month === 0) { setMonth(11); setYear(year - 1); }
+    else setMonth(month - 1);
+    setSelected(null);
+  };
+
+  const next = () => {
+    if (month === 11) { setMonth(0); setYear(year + 1); }
+    else setMonth(month + 1);
+    setSelected(null);
+  };
+
+  const selectedBookings = selected ? getBookings(selected) : [];
+
+  return (
+    <section>
+      <div className="bg-white border border-gray-300 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between px-3 pt-3 pb-2">
+          <h2 className="text-sm font-semibold text-gray-900">{MONTHS[month]} {year}</h2>
+          <div className="flex gap-1">
+            <button onClick={prev} className="w-6 h-6 rounded border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700 transition text-xs">&larr;</button>
+            <button onClick={next} className="w-6 h-6 rounded border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700 transition text-xs">&rarr;</button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 border-t border-gray-200">
+          {DAYS.map((d, i) => (
+            <div key={i} className="py-1.5 text-center text-[9px] font-medium text-gray-400 uppercase">{d}</div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 border-t border-gray-200">
+          {cells.map((day, idx) => {
+            const dayBookings = day ? getBookings(day) : [];
+            const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+            const isSelected = day === selected;
+            return (
+              <div
+                key={idx}
+                onClick={() => day && setSelected(day)}
+                className={`min-h-[3rem] p-1 border-b border-r border-gray-100 ${day ? "cursor-pointer hover:bg-gray-50" : ""} ${isSelected ? "bg-gray-50" : ""}`}
+              >
+                {day && (
+                  <>
+                    <span className={`text-[10px] font-medium ${isToday ? "bg-gray-900 text-white w-5 h-5 rounded-full flex items-center justify-center" : "text-gray-500"}`}>
+                      {day}
+                    </span>
+                    {dayBookings.length > 0 && (
+                      <div className="mt-0.5 flex gap-0.5">
+                        {dayBookings.slice(0, 3).map((b, i) => (
+                          <span key={i} className={`w-1.5 h-1.5 rounded-full ${EVENT_COLOR[b.event_type] || "bg-gray-400"}`} />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {selected && (
+          <div className="px-3 pb-3 pt-2 border-t border-gray-200">
+            <p className="text-[10px] text-gray-400 uppercase mb-1.5">
+              {MONTHS[month]} {selected}, {year}
+            </p>
+            {selectedBookings.length === 0 ? (
+              <p className="text-[11px] text-gray-300">No events</p>
+            ) : (
+              <div className="space-y-1">
+                {selectedBookings.map((b) => (
+                  <Link
+                    key={b.id}
+                    href={`/admin/inquiries/${b.id}`}
+                    className="flex items-center gap-2 py-1"
+                  >
+                    <span className={`w-2 h-2 rounded-full ${EVENT_COLOR[b.event_type] || "bg-gray-400"}`} />
+                    <span className="text-xs text-gray-700 truncate">{b.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
