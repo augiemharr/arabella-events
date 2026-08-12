@@ -23,25 +23,30 @@ CREATE TABLE IF NOT EXISTS bookings (
 -- Enable Row Level Security
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
--- Allow anonymous inserts (for the contact form)
-CREATE POLICY "Allow anonymous inserts" ON bookings
-  FOR INSERT
-  WITH CHECK (true);
+-- Bookings policies (safe to re-run)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous inserts' AND tablename = 'bookings') THEN
+    CREATE POLICY "Allow anonymous inserts" ON bookings FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
 
--- Allow authenticated reads (for admin)
-CREATE POLICY "Allow authenticated reads" ON bookings
-  FOR SELECT
-  USING (auth.role() = 'authenticated');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow authenticated reads' AND tablename = 'bookings') THEN
+    CREATE POLICY "Allow authenticated reads" ON bookings FOR SELECT USING (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
--- Allow authenticated updates (for admin status changes)
-CREATE POLICY "Allow authenticated updates" ON bookings
-  FOR UPDATE
-  USING (auth.role() = 'authenticated');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow authenticated updates' AND tablename = 'bookings') THEN
+    CREATE POLICY "Allow authenticated updates" ON bookings FOR UPDATE USING (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
--- Allow authenticated deletes (for admin)
-CREATE POLICY "Allow authenticated deletes" ON bookings
-  FOR DELETE
-  USING (auth.role() = 'authenticated');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow authenticated deletes' AND tablename = 'bookings') THEN
+    CREATE POLICY "Allow authenticated deletes" ON bookings FOR DELETE USING (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
 -- Create gallery table
 CREATE TABLE IF NOT EXISTS gallery (
@@ -56,22 +61,27 @@ CREATE TABLE IF NOT EXISTS gallery (
 -- Enable Row Level Security
 ALTER TABLE gallery ENABLE ROW LEVEL SECURITY;
 
--- Allow anonymous reads (for public gallery page)
-CREATE POLICY "Allow anonymous reads" ON gallery
-  FOR SELECT
-  USING (true);
+-- Gallery policies (safe to re-run)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous reads' AND tablename = 'gallery') THEN
+    CREATE POLICY "Allow anonymous reads" ON gallery FOR SELECT USING (true);
+  END IF;
+END $$;
 
--- Allow authenticated inserts (for admin uploads)
-CREATE POLICY "Allow authenticated inserts" ON gallery
-  FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow authenticated inserts' AND tablename = 'gallery') THEN
+    CREATE POLICY "Allow authenticated inserts" ON gallery FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
--- Allow authenticated updates (for admin reorder/edit)
-CREATE POLICY "Allow authenticated updates" ON gallery
-  FOR UPDATE
-  USING (auth.role() = 'authenticated');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow authenticated updates' AND tablename = 'gallery') THEN
+    CREATE POLICY "Allow authenticated updates" ON gallery FOR UPDATE USING (auth.role() = 'authenticated');
+  END IF;
+END $$;
 
--- Allow authenticated deletes (for admin)
-CREATE POLICY "Allow authenticated deletes" ON gallery
-  FOR DELETE
-  USING (auth.role() = 'authenticated');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow authenticated deletes' AND tablename = 'gallery') THEN
+    CREATE POLICY "Allow authenticated deletes" ON gallery FOR DELETE USING (auth.role() = 'authenticated');
+  END IF;
+END $$;
