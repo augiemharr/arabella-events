@@ -21,7 +21,7 @@ export default function AboutPage() {
       {/* Hero */}
       <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1551218808-94e220e084d2?w=1920&h=800&fit=crop"
+          src="/photos/485790745_1089778786500126_4091750587922350308_n.jpg"
           alt="About Arabella"
           fill
           className="object-cover"
@@ -47,7 +47,7 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div>
               <p className="text-[var(--color-primary)] tracking-[0.2em] uppercase text-sm mb-3 font-medium">
-                Since 2015
+                Since 1992
               </p>
               <h2
                 className="text-3xl md:text-4xl font-bold text-[var(--color-dark)] mb-6"
@@ -79,7 +79,7 @@ export default function AboutPage() {
             </div>
             <div className="relative h-[500px] rounded-2xl overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&h=1000&fit=crop"
+                src="/photos/484994606_1089778563166815_5014659655509340016_n.jpg"
                 alt="Arabella's kitchen"
                 fill
                 className="object-cover"

@@ -1,0 +1,16 @@
+# Replace yourdomain.com with your actual domain
+# For example: arabellaevents.ph
+yourdomain.com {
+    reverse_proxy arabella-app:3000
+    
+    # Enable compression
+    encode zstd gzip
+    
+    # Basic security headers
+    header {
+        Strict-Transport-Security max-age=31536000;
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer-when-downgrade
+    }
+}

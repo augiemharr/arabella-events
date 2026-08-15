@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   last_contacted_at TIMESTAMP WITH TIME ZONE,
   deposit_paid BOOLEAN DEFAULT FALSE,
   final_paid BOOLEAN DEFAULT FALSE,
+  menu_selection JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

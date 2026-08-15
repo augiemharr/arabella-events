@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useAdminAuth } from "@/hooks/useAdmin";
 import { RESPONSE_TEMPLATES } from "@/lib/templates";
 import AdminHeader from "@/components/AdminHeader";
+import MenuEstimator from "@/components/MenuEstimator";
 
 interface Booking {
   id: string;
@@ -24,6 +25,7 @@ interface Booking {
   last_contacted_at: string | null;
   deposit_paid: boolean;
   final_paid: boolean;
+  menu_selection: Record<string, number> | null;
   created_at: string;
 }
 
@@ -220,6 +222,39 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
               {booking.message && <div className="mt-3"><p className="text-xs text-gray-400 mb-1">Message</p><p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{booking.message}</p></div>}
             </div>
 
+            {booking.menu_selection && Object.keys(booking.menu_selection).length > 0 && (
+              <div>
+                <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Customer Menu Selection</h2>
+                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                  {(["main", "dessert", "drink"] as const).map((cat) => {
+                    const catItems = Object.entries(booking.menu_selection!).filter(([name]) => {
+                      const catMap: Record<string, string[]> = {
+                        main: ["Bagnet", "Poqui Poqui", "Dinuguan", "Pinakbet", "Hegado", "Pochero"],
+                        dessert: ["Leche Flan", "Halo-Halo", "Bibingka", "Cassava Cake"],
+                        drink: ["Softdrinks (1L)", "Bottled Water", "Juice (1L)", "Iced Tea (1L)"],
+                      };
+                      return catMap[cat]?.includes(name);
+                    });
+                    if (catItems.length === 0) return null;
+                    return (
+                      <div key={cat}>
+                        <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-1">
+                          {cat === "main" ? "Main Dishes" : cat === "dessert" ? "Desserts" : "Drinks"}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {catItems.map(([name, qty]) => (
+                            <span key={name} className="text-xs bg-white border border-gray-200 text-gray-700 px-2 py-1 rounded-md">
+                              {name} × {qty}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div>
               <h2 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest mb-3">Quick Reply</h2>
 
@@ -322,6 +357,8 @@ export default function InquiryDetailPage({ params }: { params: Promise<{ id: st
                 </div>
               </div>
             </div>
+
+            <MenuEstimator pax={booking.pax || 0} />
 
             <div className="pt-4 border-t border-gray-100">
               <button onClick={handleDelete} className="text-xs text-red-400 hover:text-red-600 transition-colors">Delete inquiry</button>

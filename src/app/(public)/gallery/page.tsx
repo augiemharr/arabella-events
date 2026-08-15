@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import ScrollReveal from "@/components/ScrollReveal";
 import { usePublicGallery } from "@/hooks/useGallery";

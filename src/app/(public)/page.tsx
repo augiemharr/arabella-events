@@ -6,17 +6,17 @@ const featuredDishes = [
   {
     name: "Bagnet",
     description: "Crispy deep-fried pork belly, a beloved Ilocano delicacy",
-    image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&h=400&fit=crop",
+    image: "/photos/bagnet.jpg",
   },
   {
     name: "Poqui Poqui",
     description: "Smoky grilled eggplant with eggs and tomatoes",
-    image: "https://images.unsplash.com/photo-1625943553852-781c6dd46faa?w=600&h=400&fit=crop",
+    image: "/photos/poqui-poqui.jpg",
   },
   {
     name: "Dinuguan",
     description: "Rich pork blood stew, a Filipino classic",
-    image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=600&h=400&fit=crop",
+    image: "/photos/dinuguan.jpg",
   },
 ];
 
@@ -33,7 +33,7 @@ export default function Home() {
       {/* Hero */}
       <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&h=1080&fit=crop"
+          src="/photos/484994606_1089778563166815_5014659655509340016_n.jpg"
           alt="Arabella Events Place venue"
           fill
           className="object-cover"
@@ -184,10 +184,10 @@ export default function Home() {
           </ScrollReveal>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600&h=600&fit=crop",
-              "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600&h=600&fit=crop",
-              "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=600&h=600&fit=crop",
-              "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600&h=600&fit=crop",
+              "/photos/485373853_1089778793166792_79811654493615512_n.jpg",
+              "/photos/485658410_1089779039833434_8955685759006598901_n.jpg",
+              "/photos/485790745_1089778786500126_4091750587922350308_n.jpg",
+              "/photos/484994606_1089778563166815_5014659655509340016_n.jpg",
             ].map((src, i) => (
               <ScrollReveal key={i} delay={i * 100}>
                 <div className="relative aspect-square rounded-2xl overflow-hidden group">
@@ -215,7 +215,7 @@ export default function Home() {
       {/* CTA */}
       <section className="relative py-24 overflow-hidden">
         <Image
-          src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1920&h=600&fit=crop"
+          src="/photos/485373853_1089778793166792_79811654493615512_n.jpg"
           alt="Event setup"
           fill
           className="object-cover"

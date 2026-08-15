@@ -20,6 +20,7 @@ export interface Booking {
   last_contacted_at: string | null;
   deposit_paid: boolean;
   final_paid: boolean;
+  menu_selection: Record<string, number> | null;
   created_at: string;
 }
 

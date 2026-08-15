@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  arabella-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env.production
+    expose:
+      - 3000
+
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - arabella-app
+
+volumes:
+  caddy_data:
+  caddy_config:

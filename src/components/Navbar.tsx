@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -18,16 +19,15 @@ export default function Navbar() {
     <nav className="bg-white/95 backdrop-blur-sm shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <Link href="/" className="flex items-center gap-2">
-            <span
-              className="text-2xl font-bold text-[var(--color-primary)]"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              Arabella
-            </span>
-            <span className="text-xs tracking-widest uppercase text-gray-500 hidden sm:block">
-              Events Place
-            </span>
+          <Link href="/" className="flex-shrink-0">
+            <Image
+              src="/logo.svg"
+              alt="Arabella Events Place"
+              width={180}
+              height={36}
+              className="h-9 w-auto"
+              priority
+            />
           </Link>
 
           {/* Desktop nav */}

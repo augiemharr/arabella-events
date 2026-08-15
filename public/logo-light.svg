@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" fill="none">
+  <!-- ARABELLA text -->
+  <text x="300" y="62" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="56" font-weight="700" letter-spacing="0.18em" fill="#D4A843">ARABELLA</text>
+  <!-- Left line -->
+  <line x1="80" y1="88" x2="220" y2="88" stroke="#9ca3af" stroke-width="0.75"/>
+  <!-- EVENTS PLACE text -->
+  <text x="300" y="93" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="16" letter-spacing="0.35em" fill="#9ca3af">EVENTS PLACE</text>
+  <!-- Right line -->
+  <line x1="380" y1="88" x2="520" y2="88" stroke="#9ca3af" stroke-width="0.75"/>
+</svg>

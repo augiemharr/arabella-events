@@ -1,16 +1,9 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import SiteLockGuard from "@/components/SiteLockGuard";
 
 export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </>
-  );
+  return <SiteLockGuard>{children}</SiteLockGuard>;
 }

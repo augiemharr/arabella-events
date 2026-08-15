@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -7,15 +8,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {/* Brand */}
           <div>
-            <h3
-              className="text-3xl font-bold text-[var(--color-accent)] mb-3"
-              style={{ fontFamily: "var(--font-playfair)" }}
-            >
-              Arabella
-            </h3>
-            <p className="text-sm tracking-widest uppercase text-gray-400 mb-4">
-              Events Place
-            </p>
+            <Image
+              src="/logo-light.svg"
+              alt="Arabella Events Place"
+              width={200}
+              height={40}
+              className="h-10 w-auto mb-4"
+            />
             <p className="text-gray-400 text-sm leading-relaxed">
               Premier events venue and catering in Laoag City, Ilocos Norte.
               Making your special occasions truly memorable with authentic
@@ -73,7 +72,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-12 pt-8 text-center text-xs text-gray-500">
+        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-wrap justify-between items-center text-xs text-gray-500 gap-4">
           <p>&copy; {new Date().getFullYear()} Arabella Events Place. All rights reserved.</p>
         </div>
       </div>

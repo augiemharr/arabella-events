@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAdminAuth, useBookings } from "@/hooks/useAdmin";
 import AdminHeader from "@/components/AdminHeader";
 import NewBookingModal from "@/components/NewBookingModal";
+import AdminPaymentModal from "@/components/AdminPaymentModal";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -118,6 +119,8 @@ export default function AdminDashboard() {
       )}
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <AdminPaymentModal />
+
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div className="bg-white border border-gray-300 rounded-lg shadow-sm p-3">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
+import CustomerMenuPicker from "@/components/CustomerMenuPicker";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ export default function ContactPage() {
     pax: "",
     message: "",
   });
+  const [menuSelection, setMenuSelection] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,6 +41,7 @@ export default function ContactPage() {
       event_date: formData.date || null,
       pax: formData.pax ? parseInt(formData.pax) : null,
       message: formData.message || null,
+      menu_selection: Object.keys(menuSelection).length > 0 ? menuSelection : null,
       status: "new",
     });
 
@@ -218,6 +221,7 @@ export default function ContactPage() {
                       placeholder="Tell us about your event — special requests, menu preferences, etc."
                     />
                   </div>
+                  <CustomerMenuPicker value={menuSelection} onChange={setMenuSelection} />
                   <button
                     type="submit"
                     disabled={loading}
